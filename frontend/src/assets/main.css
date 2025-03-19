@@ -1,0 +1,26 @@
+@import './base.css';
+
+/*:root,
+[data-bs-theme=light] {
+  --text: #05021c;
+  --background: #f0effe;
+  --primary: #2b24ed;
+  --secondary: #f47ae1;
+  --accent: #f04c96;
+
+  /* Map your colors to Bootstrap variables 
+  --bs-body-color: var(--text) !important;
+  --bs-body-bg: var(--background) !important;
+  --bs-primary: var(--primary) !important;
+  --bs-primary-rgb: 43, 36, 237 !important;
+  --bs-secondary: var(--secondary) !important;
+  --bs-secondary-rgb: 244, 122, 225 !important;
+  --bs-link-color: var(--primary) !important;
+  --bs-link-hover-color: var(--accent) !important;
+} */
+/* #app {
+  max-width: 1280px;
+  margin: 0 auto;
+  padding: 2rem;
+  font-weight: normal;
+} */
