@@ -7,7 +7,7 @@ from flask_jwt_extended import JWTManager
 from flask_migrate import Migrate
 
 from backend.utils.init_db import create_initial_data
-from .controllers import subject, auth, instructors, chapters
+from .controllers import subject, auth, instructors, chapters, students, quiz
 
 from .config import LocalDevelopmentConfig
 from .utils.db import db
@@ -68,5 +68,8 @@ app.register_blueprint(auth.bp)
 app.register_blueprint(instructors.bp)
 app.register_blueprint(subject.bp)
 app.register_blueprint(chapters.bp)
+app.register_blueprint(students.bp)
+app.register_blueprint(quiz.bp)
+
 if __name__ == "__main__":
     app.run(debug=True)

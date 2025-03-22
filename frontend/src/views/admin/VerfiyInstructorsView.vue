@@ -1,20 +1,19 @@
 <template>
   <div>
-    <!-- Loading state -->
+
     <div v-if="loading" class="text-center my-4">
       <BSpinner label="Loading..."></BSpinner>
       <p class="mt-2">Loading instructor data...</p>
     </div>
 
-    <!-- Error message -->
     <BAlert v-else-if="error" show variant="danger">
       {{ error }}
     </BAlert>
 
-    <!-- Instructors table -->
+
     <BTable v-else hover responsive :items="instructors" :fields="fields" striped>
-      <!-- Custom formatted name column -->
-      <template #cell(name)="data">
+
+      <!-- <template #cell(name)="data">
         <div class="d-flex align-items-center">
           <img :src="data.item.profileImage || 'https://via.placeholder.com/40'" class="rounded-circle me-2" width="40"
             height="40" alt="Profile">
@@ -23,7 +22,7 @@
             <div class="small text-muted">{{ data.item.qualification }}</div>
           </div>
         </div>
-      </template>
+      </template> -->
 
       <!-- Status column with badge -->
       <template #cell(status)="data">
@@ -36,13 +35,13 @@
       <template #cell(actions)="data">
         <div class="d-flex gap-2">
           <BButton size="sm" variant="success" @click="approveInstructor(data.item.id)"
-            :disabled="data.item.status !== 'Pending'">
+            :disabled="data.item.approval === true">
             <span v-if="processingId === data.item.id" class="spinner-border spinner-border-sm me-1"></span>
             Approve
           </BButton>
 
           <BButton size="sm" variant="danger" @click="rejectInstructor(data.item.id)"
-            :disabled="data.item.status !== 'Pending'">
+            :disabled="data.item.approval === true">
             Reject
           </BButton>
 
@@ -53,7 +52,6 @@
       </template>
     </BTable>
 
-    <!-- Instructor details modal -->
     <BModal v-model="showModal" :title="`Instructor Details: ${selectedInstructor?.name || ''}`" size="lg" hide-footer>
       <div v-if="selectedInstructor" class="p-2">
         <div class="text-center mb-4">
@@ -93,8 +91,8 @@
         </div>
 
         <div class="d-flex justify-content-end mt-4">
-          <BButton @click="showModal = false" variant="secondary" class="me-2">Close</BButton>
-          <BButton v-if="selectedInstructor.status === 'Pending'" @click="approveInstructor(selectedInstructor.id)"
+          <!-- <BButton @click="showModal = false" variant="secondary" class="me-2">Close</BButton> -->
+          <BButton v-if="selectedInstructor.approval !== true" @click="approveInstructor(selectedInstructor.id)"
             variant="success">
             Approve Access
           </BButton>
@@ -106,23 +104,16 @@
 
 <script setup>
 import { ref, onMounted } from 'vue'
-import {
-  BTable,
-  BButton,
-  BBadge,
-  BSpinner,
-  BAlert,
-  BModal
-} from 'bootstrap-vue-next'
 import { apiFetch } from '@/main'
 
 // Table fields definition
 const fields = [
   { key: 'name', label: 'Instructor Name', sortable: true },
   { key: 'email', label: 'Email', sortable: true },
+  { key: 'qualification', label: 'Qualification', sortable: true},
   { key: 'department', label: 'Department', sortable: true },
   { key: 'requestDate', label: 'Requested On', sortable: true },
-  { key: 'status', label: 'Status', sortable: true },
+  { key: 'approval', label: 'Approval', sortable: true },
   { key: 'actions', label: 'Actions' }
 ]
 
@@ -153,7 +144,7 @@ const fetchInstructors = async () => {
 
 // Get appropriate badge variant based on status
 const getStatusVariant = (status) => {
-  switch (status) {
+  switch (status) { 
     case 'Approved': return 'success'
     case 'Rejected': return 'danger'
     case 'Pending': return 'warning'
@@ -172,17 +163,19 @@ const approveInstructor = async (id) => {
   processingId.value = id
 
   try {
-    await apiFetch(`/instructors/${id}/approve`, { method: "POST" })
+    await apiFetch(`/instructors/${id}/status`, { method: "PATCH", query: { approval: true }, headers: {
+      'Content-Type': 'application/json'
+    } })
 
     // Update local state
     const index = instructors.value.findIndex(i => i.id === id)
     if (index !== -1) {
-      instructors.value[index].status = 'Approved'
+      instructors.value[index].approval = true
     }
 
     // Update modal if open
     if (selectedInstructor.value && selectedInstructor.value.id === id) {
-      selectedInstructor.value.status = 'Approved'
+      selectedInstructor.value.approval = true
     }
   } catch (err) {
     console.error('Error approving instructor:', err)
@@ -199,17 +192,19 @@ const rejectInstructor = async (id) => {
   processingId.value = id
 
   try {
-    await apiFetch(`/instructors/${id}/reject`, { method: "POST" })
+    await apiFetch(`/instructors/${id}/status`, { method: "PATCH", query: { approval: false }, headers: {
+      'Content-Type': 'application/json'
+    } })
 
     // Update local state
     const index = instructors.value.findIndex(i => i.id === id)
     if (index !== -1) {
-      instructors.value[index].status = 'Rejected'
+      instructors.value[index].approval = false
     }
 
     // Update modal if open
     if (selectedInstructor.value && selectedInstructor.value.id === id) {
-      selectedInstructor.value.status = 'Rejected'
+      selectedInstructor.value.approval = false
     }
   } catch (err) {
     console.error('Error rejecting instructor:', err)

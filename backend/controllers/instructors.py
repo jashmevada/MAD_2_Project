@@ -27,5 +27,16 @@ class InstructorsAPI(MethodView):
     def patch(self):
         pass
 
+@bp.route("/<int:id>/status", methods=['PATCH'])
+def update_status(id: int):
+    approval: bool = request.args.get("approval")
+    
+    instructor: Instructor = Instructor.query.get_or_404(id)
+    
+    if approval or approval == "true" or approval == "false":
+        instructor.approval = True if approval == "true" else False  
+        return add_db([instructor], "Success Update", "Failed to update")
+
+    return {"msg": "Error"}, 400 
 
 bp.add_url_rule("/", view_func=InstructorsAPI.as_view("instructors_api"))

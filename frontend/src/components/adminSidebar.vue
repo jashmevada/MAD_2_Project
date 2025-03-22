@@ -24,14 +24,19 @@
           </BNavItem>
 
 
-          <BNavItem to="/students" active-class="active" class="sidebar-item">
+          <BNavItem to="/admin/students" active-class="active" class="sidebar-item">
             <div class="d-flex align-items-center">
               <Icon icon="heroicons:user-group" class="me-3" width="20" />
               Students
             </div>
           </BNavItem>
 
-
+          <BNavItem to="/admin/departments" active-class="active" class="sidebar-item">
+            <div class="d-flex align-items-center">
+              <Icon icon="heroicons:queue-list" class="me-3" width="20" />
+              Departments
+            </div>
+          </BNavItem>
 
           <BNavItem to="/admin/subjects" active-class="active" class="sidebar-item">
             <div class="d-flex align-items-center">
@@ -40,39 +45,30 @@
             </div>
           </BNavItem>
 
-
-          <BNavItem to="/quiz" active-class="active" class="sidebar-item">
+          <BNavItem to="/admin/quiz" active-class="active" class="sidebar-item">
             <div class="d-flex align-items-center">
               <Icon icon="heroicons:clipboard" class="me-3" width="20" />
               Quiz
             </div>
           </BNavItem>
 
-          <router-link to="/analytics" custom v-slot="{ navigate, isActive }">
+          <!-- <router-link to="/analytics" custom v-slot="{ navigate, isActive }">
             <BNavItem @click="navigate" :active="isActive" class="sidebar-item">
               <div class="d-flex align-items-center">
                 <Icon icon="heroicons:chart-bar" class="me-3" width="20" />
                 Analytics
               </div>
             </BNavItem>
-          </router-link>
-
-          <router-link to="/settings" custom v-slot="{ navigate, isActive }">
-            <BNavItem @click="navigate" :active="isActive" class="sidebar-item">
-              <div class="d-flex align-items-center">
-                <Icon icon="heroicons:cog-6-tooth" class="me-3" width="20" />
-                Settings
-              </div>
-            </BNavItem>
-          </router-link>
+          </router-link> -->
         </BNav>
 
         <div class="mt-4 pt-3 border-top">
           <h6 class="text-muted text-uppercase small fw-bold mb-3">User</h6>
           <div class="d-flex align-items-center mb-3">
-            <BAvatar src="https://i.pravatar.cc/150?img=12" size="md" class="me-2"></BAvatar>
+            <Icon icon="material-symbols:account-circle-outline" class="me-2" width="32" height="32"></Icon>
+            <!-- <BAvatar src="https://i.pravatar.cc/150?img=12" size="md" class="me-2"></BAvatar> -->
             <div>
-              <div class="fw-bold">John Doe</div>
+              <div class="fw-bold">Jash</div>
               <small class="text-muted">Administrator</small>
             </div>
           </div>
@@ -123,8 +119,6 @@ const toggleSidebar = () => {
 const items = [
   { title: 'home', link: '', icon: '' }
 ]
-
-
 
 </script>
 

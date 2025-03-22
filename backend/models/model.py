@@ -1,20 +1,11 @@
 from datetime import datetime, date
 from typing import List, Optional, Set
-from sqlalchemy import Column, ForeignKey, DateTime, Date, JSON, Integer, String, Table
+from sqlalchemy import Column, ForeignKey, DateTime, Date, Integer, String, Table
 from sqlalchemy.orm import relationship, Mapped, mapped_column
-
+from sqlalchemy.ext.mutable import MutableDict
+from sqlalchemy.dialects.sqlite import JSON
 
 from ..utils.db import db
-
-# class User(db.Model):
-#     id: Mapped[int] = mapped_column(autoincrement=True, primary_key=True)
-#     name: Mapped[str]
-#     email: Mapped[str]
-#     password: Mapped[str]
-#     username: Mapped[str]
-#     role: Mapped[str]
-
-# User: Mapped[User] = relationship()
 
 
 class User(db.Model):
@@ -83,20 +74,33 @@ instructor_subject = Table(
 class Instructor(User):
     __tablename__ = "instructors"
 
+    __mapper_args__ = {
+        "polymorphic_identity": "instructor",
+    }
+
     id: Mapped[int] = mapped_column(ForeignKey("users.id"), primary_key=True)
     approval: Mapped[bool]
+    qualification: Mapped[str]
+    name: Mapped[str]
+    subject: Mapped[int] = mapped_column(ForeignKey("subjects.id"))
 
-    subjects: Mapped[Set["Subject"]] = relationship(
+    subjects: Mapped["Subject"] = relationship(
         secondary="instructor_subject", back_populates="instructors"
     )
-
-    def __init__(self) -> None:
-        super().__init__()
 
     def to_dict(self):
         return {
             "id": self.id,
+            "approval": self.approval,
+            "qualification": self.qualification,
+            "name": self.name,
+            "subject": self.subject,
+            "email": self.email,
         }
+
+
+# :TODO Add Department Model.
+# class Department(db.Model): ...
 
 
 class Subject(db.Model):
@@ -126,6 +130,7 @@ class Chapter(db.Model):
     name: Mapped[str] = mapped_column(String(100))
     description: Mapped[Optional[str]] = mapped_column(String(500))
     subject_id: Mapped[int] = mapped_column(ForeignKey("subjects.id"))
+
     subject: Mapped["Subject"] = relationship("Subject", back_populates="chapters")
     quizzes: Mapped["Quiz"] = relationship("Quiz", back_populates="chapter")
 
@@ -133,42 +138,67 @@ class Chapter(db.Model):
         return {
             "name": self.name,
             "description": self.description,
-            "subject_id": self.subject_id,
-            "subjects": self.subject,
+            "id": self.id,
+            "subjects": self.subject.to_dict(),
         }
 
 
 class Quiz(db.Model):
     __tablename__ = "quizzes"
     id: Mapped[int] = mapped_column(primary_key=True)
+    title: Mapped[str]
     chapter_id: Mapped[int] = mapped_column(ForeignKey("chapters.id"))
-    date_of_quiz: Mapped[DateTime] = mapped_column(DateTime, nullable=False)
-    time_duration: Mapped[str] = mapped_column(
-        String(5), nullable=False
-    )  # HH:MM format
-    remarks: Mapped[str] = mapped_column(String(500))
+    date_of_quiz: Mapped[datetime]
+    time_duration: Mapped[str] = mapped_column(String(5))  # HH:MM format
+    remarks: Mapped[str]
+    created_at: Mapped[datetime] = mapped_column(default=datetime.now())
+    created_by: Mapped[int] = mapped_column(ForeignKey("users.id"))
+
     chapter: Mapped["Chapter"] = relationship("Chapter", back_populates="quizzes")
-    questions: Mapped["Question"] = relationship("Question", back_populates="quiz")
+    questions: Mapped[List["Question"]] = relationship(
+        "Question", back_populates="quiz"
+    )
     scores: Mapped["Score"] = relationship("Score", back_populates="quiz")
+    # created_by_user: Mapped["User"] = relationship("User")
+
+    def to_dict(self):
+        return {
+            "id": self.id,
+            "title": self.title,
+            "chapter_id": self.chapter_id,
+            "subject": self.chapter.subject.name,
+            "date_of_quiz": self.date_of_quiz,
+            "time_duration": self.time_duration,
+            "remarks": self.remarks,
+            "question": [question.to_dict() for question in self.questions],
+        }
 
 
 class Question(db.Model):
     id: Mapped[int] = mapped_column(primary_key=True)
     quiz_id: Mapped[str] = mapped_column(ForeignKey("quizzes.id"))
-    question_statement: Mapped[str] = mapped_column(String(500), nullable=False)
-    options: Mapped[str] = mapped_column(JSON, nullable=False)
+    question_statement: Mapped[str] = mapped_column(String(500))
+    options: Mapped[dict] = mapped_column(MutableDict.as_mutable(JSON))
     correct_option: Mapped[int]
     quiz: Mapped["Quiz"] = relationship("Quiz", back_populates="questions")
+
+    def to_dict(self):
+        return {
+            "id": self.id,
+            "quiz_id": self.quiz_id,
+            "question_statement": self.question_statement,
+            "options": self.options,
+            "correct_option": self.correct_option,
+        }
 
 
 class Score(db.Model):
     id: Mapped[int] = mapped_column(primary_key=True, autoincrement=True)
     quiz_id: Mapped[int] = mapped_column(ForeignKey("quizzes.id"))
     user_id: Mapped[int] = mapped_column(ForeignKey("student.id"))
-    time_stamp_of_attempt: Mapped[DateTime] = mapped_column(
-        DateTime, default=datetime.now()
-    )
-    total_scored: Mapped[float]
+    time_stamp_of_attempt: Mapped[datetime] = mapped_column(default=datetime.now())
+    total_scored: Mapped[float] # convert into property compute by quiz and selected_options to get total scored.
+    selected_options: Mapped[dict] = mapped_column(MutableDict.as_mutable(JSON))
 
     quiz: Mapped["Quiz"] = relationship(back_populates="scores")
     user: Mapped[Student] = relationship(back_populates="scores")

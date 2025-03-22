@@ -24,8 +24,6 @@
                       placeholder="Enter your Email." required trim></BFormInput>
                   </BFormGroup>
 
-
-
                   <BFormGroup label="Password" label-for="password" :state="validation.password"
                     :invalid-feedback="errors.password">
                     <BInputGroup>
@@ -112,6 +110,13 @@
                         :state="validation.instructorEmail" placeholder="Enter your email" required trim></BFormInput>
                     </BFormGroup>
 
+                    <BFormGroup label="Select Your Subject" label-for="instructorSubject"
+                      :state="validation.instructorSubject" :invalid-feedback="errors.instructorSubject">
+                      <BFormSelect id="instructorSubject" v-model="form.instructorSubject" value-field="id"
+                        text-field="name" :options="subjectList" :state="validation.instructorSubject"
+                        placeholder="Enter your full name" required trim></BFormSelect>
+                    </BFormGroup>
+
                     <BFormGroup label="Qualifications" label-for="instructorQualifications">
                       <BFormInput id="instructorQualifications" v-model="form.instructorQualifications"
                         placeholder="Enter your qualifications"></BFormInput>
@@ -129,7 +134,7 @@
               </div>
 
               <BAlert v-if="formSubmitted" variant="success" show dismissible @dismissed="formSubmitted = false">
-                Registration successful! Please check your email to verify your account.
+                Registration successful!
               </BAlert>
             </BCardBody>
           </BCard>
@@ -140,25 +145,8 @@
 </template>
 
 <script setup>
-import { ref, reactive, computed } from 'vue'
+import { ref, reactive, computed, onMounted, shallowRef } from 'vue'
 import { Icon } from '@iconify/vue'
-import {
-  BContainer,
-  BRow,
-  BCol,
-  BCard,
-  BCardHeader,
-  BCardBody,
-  BForm,
-  BFormGroup,
-  BFormInput,
-  BFormSelect,
-  BButton,
-  BAlert,
-  BInputGroup,
-  BProgress,
-  BSpinner
-} from 'bootstrap-vue-next'
 import { apiFetch } from '@/main'
 import { useRouter } from 'vue-router'
 
@@ -176,7 +164,8 @@ const form = reactive({
   studentQualification: '',
   instructorName: '',
   instructorEmail: '',
-  instructorQualifications: ''
+  instructorQualifications: '',
+  instructorSubject: -1,
 })
 
 // UI state
@@ -194,7 +183,8 @@ const errors = reactive({
   studentFirstName: '',
   studentLastName: '',
   instructorName: '',
-  instructorEmail: ''
+  instructorEmail: '',
+  instructorSubject: ''
 })
 
 // Role options
@@ -237,6 +227,13 @@ const passwordStrengthVariant = computed(() => {
   if (strength === 3) return 'info'
   return 'success'
 })
+
+let subjectList = shallowRef([])
+
+onMounted(async () => {
+  subjectList.value = await apiFetch("/subjects/")
+})
+
 
 const validateStep1 = () => {
   let isValid = true
@@ -312,7 +309,8 @@ const validation = computed(() => {
     studentLastName: errors.studentLastName ? false : null,
     studentQualification: errors.studentQualification ? false : null,
     instructorName: errors.instructorName ? false : null,
-    instructorEmail: errors.instructorEmail ? false : null
+    instructorEmail: errors.instructorEmail ? false : null,
+    instructorSubject: errors.instructorSubject ? false : null
   }
 })
 
@@ -341,8 +339,9 @@ const submitForm = async () => {
             qualification: form.studentQualification
           } : {}),
           ...(form.role === 'instructor' ? {
-            full_name: form.instructorName,
-            qualifications: form.instructorQualifications
+            name: form.instructorName,
+            qualification: form.instructorQualifications,
+            subject: form.instructorSubject
           } : {})
         },
         email: form.role === 'student' ? form.email : form.instructorEmail,

@@ -21,14 +21,13 @@ const showDeleteChapterModal = ref(false);
 const chapterForm = reactive({
   id: null,
   title: '',
-  order: 1,
   description: ''
 });
 
 // Chapter fields
 const chapterFields = [
-  { key: 'order', label: '#', sortable: true },
-  { key: 'title', label: 'Title', sortable: true },
+  // { key: 'order', label: '#', sortable: true },
+  { key: 'name', label: 'Title', sortable: true },
   { key: 'description', label: 'Description' },
   { key: 'actions', label: 'Actions' }
 ];
@@ -65,11 +64,11 @@ const fetchSubjectDetails = async () => {
     chapters.value = await chaptersData
 
     // Simulate API response
-    chapters.value = [
-      { id: 1, title: 'Introduction to Algorithms', order: 1, description: 'Basic algorithm concepts' },
-      { id: 2, title: 'Variables and Data Types', order: 2, description: 'Understanding different data types' },
-      { id: 3, title: 'Control Structures', order: 3, description: 'Loops and conditional statements' }
-    ];
+    // chapters.value = [
+    //   { id: 1, title: 'Introduction to Algorithms', order: 1, description: 'Basic algorithm concepts' },
+    //   { id: 2, title: 'Variables and Data Types', order: 2, description: 'Understanding different data types' },
+    //   { id: 3, title: 'Control Structures', order: 3, description: 'Loops and conditional statements' }
+    // ];
   } catch (error) {
     console.error('Error fetching subject details:', error);
   } finally {
@@ -144,11 +143,11 @@ const handleChapterSubmit = async (event) => {
       console.log(`Chapter "${chapterForm.title}" updated successfully`);
     } else {
       // Add new chapter
-      // const response = await fetch(`/api/subjects/${subject.value.id}/chapters`, {
-      //   method: 'POST',
-      //   headers: { 'Content-Type': 'application/json' },
-      //   body: JSON.stringify(chapterForm)
-      // });
+      const response = await apiFetch(`/subjects/${subject.value.id}/chapters`, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify(chapterForm)
+      });
       // const newChapter = await response.json();
 
       // Simulate API response
@@ -171,7 +170,7 @@ const handleChapterSubmit = async (event) => {
 const resetChapterForm = () => {
   chapterForm.id = null;
   chapterForm.title = '';
-  chapterForm.order = chapters.value.length + 1;
+  // chapterForm.order = chapters.value.length + 1;
   chapterForm.description = '';
   selectedChapter.value = null;
 };
@@ -188,7 +187,7 @@ onMounted(() => {
     <BCard no-body>
       <!-- Subject Header -->
       <BCardHeader class="d-flex justify-content-between align-items-center">
-        <h3>{{ subject?.name }} <small class="text-muted">({{ subject?.code }})</small></h3>
+        <h3>{{ subject.name }}</h3>
         <BButton variant="outline-secondary" @click="$router.go(-1)">
           <i class="bi bi-arrow-left"></i> Back
         </BButton>
@@ -249,11 +248,11 @@ onMounted(() => {
             Chapter title is required
           </BFormInvalidFeedback>
         </BFormGroup>
-
+<!-- 
         <BFormGroup label="Order" label-for="chapter-order">
           <BFormInput id="chapter-order" v-model.number="chapterForm.order" type="number" min="1"
             placeholder="Enter chapter order"></BFormInput>
-        </BFormGroup>
+        </BFormGroup> -->
 
         <BFormGroup label="Description" label-for="chapter-description">
           <BFormTextarea id="chapter-description" v-model="chapterForm.description"

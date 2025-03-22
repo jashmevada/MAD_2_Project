@@ -2,7 +2,7 @@ from flask import Blueprint, current_app, jsonify
 from flask_jwt_extended import jwt_required, create_access_token, get_jwt_identity
 from flask_pydantic import validate
 
-from backend.models.model import Instructor, Student, User
+from backend.models.model import Instructor, Student, Subject, User
 from backend.models.schema import UserLogin, UserModel
 from backend.utils.common import add_db
 
@@ -14,6 +14,12 @@ bp = Blueprint("auth", __name__, url_prefix="/api")
 def login(body: UserLogin):
     user: User = User.query.filter_by(username=body.username).first()
     if user and user.password == body.password:
+        
+        if user.role == "instructor":
+            instructor: Instructor = Instructor.query.get(user.id)
+            if not instructor.approval:
+                return jsonify({"message": "Instructor not approved"}), 401
+            
         access_token = create_access_token(
             identity=str(user.id), additional_claims={"role": user.role}
         )
@@ -28,7 +34,7 @@ def register(body: UserModel):
     existing_user = User.query.filter(
         (User.username == body.username) | (User.email == body.email)
     ).first()
-
+    
     if existing_user:
         return jsonify(
             {
@@ -40,15 +46,17 @@ def register(body: UserModel):
     resp, code = "", 500
     if body.data.user_role == "instructor":
         instructor = Instructor(
-            **body.data.model_dump(exclude="user_role"),
+            **body.data.model_dump(exclude=["user_role"]),
             role="instructor",
             username=body.username,
             email=body.email,
             password=body.password,
             approval=False,
         )
+        
         resp, code = add_db([instructor])
-
+        current_app.logger.info(resp)
+        
     elif body.data.user_role == "student":
         student = Student(
             **body.data.model_dump(exclude="user_role"),
@@ -62,7 +70,7 @@ def register(body: UserModel):
 
     if code == 200:
         return jsonify({"message": "User registered"}), 201
-
+    
     return {"message": "Error"}, 500
 
 

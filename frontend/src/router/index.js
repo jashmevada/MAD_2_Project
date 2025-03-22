@@ -11,9 +11,6 @@ const router = createRouter({
     {
       path: '/about',
       name: 'about',
-      // route level code-splitting
-      // this generates a separate chunk (About.[hash].js) for this route
-      // which is lazy-loaded when the route is visited.
       component: () => import('../views/AboutView.vue'),
     },
     {
@@ -30,11 +27,16 @@ const router = createRouter({
       name: 'admin',
       component: () => import("@/components/adminLayout.vue"),
       children: [
-        { path: 'dashboard', name: "Dashboard", component: () => import("@/views/admin/DashboardView.vue") },
+        { path: 'dashboard', name: "Admin Dashboard", component: () => import("@/views/admin/DashboardView.vue") },
         {
           path: 'instructors',
           children: [
-            { path: 'verify', component: () => import("@/views/admin/VerfiyInstructorsView.vue") }]
+            { path: 'verify', name: "Instructors", component: () => import("@/views/admin/VerfiyInstructorsView.vue") }]
+        },
+        {
+          path: "students",
+          name: "Students",
+          component: () => import("@/views/admin/StudentsView.vue")
         },
         {
           path: 'subjects',
@@ -45,22 +47,75 @@ const router = createRouter({
           ]
         },
         {
+          path: 'quiz',
+          name: 'Quiz Management',
+          component: () => import("@/views/admin/QuizView.vue"),
+        },
+        {
+          name: "Create New Quiz",
+          path: 'quiz/create',
+          component: () => import("@/views/QuizCreateView.vue")
+        },
+        {
+          name: "Quiz Detail",
+          path: 'quiz/detail',
+          component: () => import("@/views/QuizDetailView.vue")
+        },
+        {
+          name: 'Edit Quiz',
+          path: 'quiz/edit',
+          component: () => import("@/views/QuizEditView.vue")
+        },
+        {
           path: 'subjects/:id',
           name: 'Subject Detail',
           component: () => import("@/views/admin/SubjectDetailView.vue")
         }
-
       ]
     },
     {
       name: 'instructor',
       path: "/instructor",
-      component: () => import("@/components/instructorLayout.vue")
+      component: () => import("@/components/instructorLayout.vue"),
+      children: [
+        // {
+        //   path: '/dashboard',
+        //   name: "Instructor Dashboard",
+        //   component: () => import("@/views/instructor/DashboardView.vue")
+        // },
+        // {
+        //   path: '/subjects',
+        //   name: "Subjects",
+        //   component: () => import("@/views/instructor/SubjectsView.vue")
+        // },
+        // {
+        //   path: '/subjects/:id',
+        //   name: "Subject Detail",
+        //   component: () => import("@/views/admin/SubjectDetailView.vue")
+        // }
+      ]
     },
     {
-      name: 'student',
+      name: 'Student',
       path: '/student',
-
+      component: () => import("@/components/studentLayout.vue"),
+      children: [
+        {
+          name: "Student Dashboard",
+          path: 'dashboard',
+          component: () => import("@/views/student/DashboardView.vue")
+        },
+        {
+          name: 'Quiz',
+          path: 'quiz',
+          component: () => import("@/views/student/QuizView.vue")
+        },
+        {
+          name: "Find Quiz",
+          path: 'quiz/find',
+          component: () => import("@/views/student/QuizFindView.vue")
+        }
+      ]
     }
   ],
 })

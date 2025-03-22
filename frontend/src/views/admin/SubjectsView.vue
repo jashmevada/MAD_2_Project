@@ -29,10 +29,12 @@
         <template #cell(actions)="{ item }">
           <div class="d-flex gap-2">
             <BButton size="sm" variant="outline-primary" @click="editSubject(item)">
-              <i class="bi bi-pencil"></i> Edit
+              <!-- <i class="bi bi-pencil">d</i>  -->
+              Edit
             </BButton>
             <BButton size="sm" variant="outline-danger" @click="confirmDelete(item)">
-              <i class="bi bi-trash"></i> Delete
+              <!-- <i class="bi bi-trash"></i> -->
+               Delete
             </BButton>
           </div>
         </template>
@@ -82,21 +84,6 @@
 
 <script setup>
 import { ref, reactive, computed, onMounted } from 'vue'
-import {
-  BTable,
-  BCard,
-  BButton,
-  BModal,
-  BForm,
-  BFormGroup,
-  BFormInput,
-  BFormSelect,
-  BFormTextarea,
-  BFormCheckbox,
-  BFormInvalidFeedback,
-  BBadge,
-  BSpinner
-} from 'bootstrap-vue-next'
 import { useRouter } from 'vue-router'
 import { apiFetch } from '@/main'
 
@@ -108,6 +95,7 @@ const fields = [
   { key: 'name', label: 'Subject Name', sortable: true },
   { key: 'code', label: 'Code', sortable: true },
   { key: 'department', label: 'Department', sortable: true },
+  {key:'description' , label:'Description', sortable:true},
   // { key: 'credits', label: 'Credits', sortable: true },
   // { key: 'status', label: 'Status', sortable: true },
   { key: 'actions', label: 'Actions' }
@@ -127,9 +115,7 @@ const form = reactive({
   name: undefined,
   code: '',
   department: '',
-  credits: 3,
   description: '',
-  status: true
 })
 
 // Department options
@@ -237,11 +223,11 @@ const handleSubmit = async (event) => {
     if (isEditing.value) {
       // Update existing subject
       // Replace with your actual API call
-      // await fetch(`/api/subjects/${form.id}`, {
-      //   method: 'PUT',
-      //   headers: { 'Content-Type': 'application/json' },
-      //   body: JSON.stringify(form)
-      // })
+      await apiFetch(`/subjects/${form.id}`, {
+        method: 'PUT',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify(form)
+      })
 
       // Update local state
       const index = subjects.value.findIndex(s => s.id === form.id)
@@ -253,11 +239,12 @@ const handleSubmit = async (event) => {
     } else {
       // Add new subject
       // Replace with your actual API call
-      // const response = await fetch('/api/subjects', {
-      //   method: 'POST',
-      //   headers: { 'Content-Type': 'application/json' },
-      //   body: JSON.stringify(form)
-      // })
+
+      const response = await apiFetch('/subjects/', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify(form)
+      })
       // const newSubject = await response.json()
 
       // Simulate API response
@@ -269,7 +256,7 @@ const handleSubmit = async (event) => {
       // Update local state
       subjects.value.push(newSubject)
 
-      console.log(`Subject "${form.name}" added successfully`)
+      // console.log(`Subject "${form.name}" added successfully`)
     }
   } catch (error) {
     console.error('Error saving subject:', error)

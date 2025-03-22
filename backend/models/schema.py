@@ -1,4 +1,5 @@
 from datetime import datetime, timedelta, time, date
+from typing import Dict, List
 from typing_extensions import Annotated, Literal, Optional, Union
 from pydantic import BaseModel, Field
 
@@ -6,11 +7,11 @@ from pydantic import BaseModel, Field
 class QueryRegisterModel(BaseModel):
     role: str
 
-
 class InstructorCreateModel(BaseModel):
     user_role: Literal["instructor"]
-    subjects: list[str]
-
+    subject: int | None = None
+    qualification: str
+    name: str
 
 class StudentCreateModel(BaseModel):
     user_role: Literal["student"]
@@ -38,22 +39,30 @@ class SubjectCreate(BaseModel):
 
 
 class ChapterModel(BaseModel):
-    name: str
+    title: str
     description: Optional[str] = None
-    subject_id: str
-    subject: Optional[SubjectCreate] = None
+    # subject: Optional[SubjectCreate] = None
 
+# Chapters should have order or not??
 
 # class ChapterCreate(BaseModel):
 #     name: str
 #     description: Optional[str] = None
 #     subject_id: int
 
-# class QuizCreate(BaseModel):
-#     chapter_id: int
-#     date_of_quiz: datetime
-#     time_duration: str = Field(..., regex=r'^\d{2}:\d{2}$')
-#     remarks: Optional[str] = None
+class QuestionModel(BaseModel):
+    question_statement: str
+    options: Dict[int , str]
+    correct_option: int
+
+class QuizCreateModel(BaseModel):
+    title: str
+    subject: int 
+    chapter_id: int
+    date_of_quiz: datetime
+    time_duration: str = Field(..., pattern=r'^\d{2}:\d{2}$')
+    remarks: Optional[str] = None
+    questions: List[QuestionModel]
 
 # class QuestionCreate(BaseModel):
 #     quiz_id: int
