@@ -1,3 +1,4 @@
+import { useLoginStore } from '@/stores/AuthStore'
 import { createRouter, createWebHistory } from 'vue-router'
 
 const router = createRouter({
@@ -25,6 +26,13 @@ const router = createRouter({
     {
       path: '/admin',
       name: 'admin',
+      meta: { requiresAuth: true, role: 'admin' },
+      beforeEnter: async (to) => {      
+        return to.meta.role === 'admin' &&
+        localStorage.getItem('role') === 'admin'
+          ? true
+          : '/'
+      },
       component: () => import("@/components/adminLayout.vue"),
       children: [
         { path: 'dashboard', name: "Admin Dashboard", component: () => import("@/views/admin/DashboardView.vue") },
@@ -32,6 +40,11 @@ const router = createRouter({
           path: 'instructors',
           children: [
             { path: 'verify', name: "Instructors", component: () => import("@/views/admin/VerfiyInstructorsView.vue") }]
+        },
+        {
+          path: 'departments',
+          name: 'Departments',
+          component: () => import("@/views/admin/DepartmentsView.vue")
         },
         {
           path: "students",
@@ -52,19 +65,19 @@ const router = createRouter({
           component: () => import("@/views/admin/QuizView.vue"),
         },
         {
-          name: "Create New Quiz",
-          path: 'quiz/create',
+          name: "Create Quiz",
+          path: "quiz/create",
           component: () => import("@/views/QuizCreateView.vue")
         },
         {
           name: "Quiz Detail",
-          path: 'quiz/detail',
+          path: 'quiz/:id/detail',
           component: () => import("@/views/QuizDetailView.vue")
         },
         {
           name: 'Edit Quiz',
-          path: 'quiz/edit',
-          component: () => import("@/views/QuizEditView.vue")
+          path: 'quiz/:id/edit',
+          component: () => import("@/views/QuizCreateView.vue")
         },
         {
           path: 'subjects/:id',
@@ -74,20 +87,43 @@ const router = createRouter({
       ]
     },
     {
-      name: 'instructor',
+      name: 'Instructor',
       path: "/instructor",
+      beforeEnter: async (to) => {
+        return to.meta.role === 'instructor' &&
+        localStorage.getItem('role') === 'instructor'
+          ? true
+          : '/'
+      },
+      meta: { requiresAuth: true, role: 'instructor' },
       component: () => import("@/components/instructorLayout.vue"),
       children: [
-        // {
-        //   path: '/dashboard',
-        //   name: "Instructor Dashboard",
-        //   component: () => import("@/views/instructor/DashboardView.vue")
-        // },
-        // {
-        //   path: '/subjects',
-        //   name: "Subjects",
-        //   component: () => import("@/views/instructor/SubjectsView.vue")
-        // },
+        {
+          path: 'dashboard',
+          name: "Instructor Dashboard",
+          component: () => import("@/views/instructor/DashboardView.vue")
+        },
+        {
+          path: 'chapters',
+          name: "Your Subject",
+          component: () => import("@/views/instructor/ChaptersView.vue")
+        },
+        {
+          path: 'quiz',
+          name: 'Quizzes',
+          component: () => import("@/views/instructor/QuizView.vue")
+        }, 
+        {
+          name: "Create New Quiz",
+          path: 'quiz/create',
+          component: () => import("@/views/QuizCreateView.vue")
+        },
+        {
+          name: 'Quiz Edit',
+          path: 'quiz/:id/edit',
+          component: () => import("@/views/QuizCreateView.vue")
+        },
+
         // {
         //   path: '/subjects/:id',
         //   name: "Subject Detail",
@@ -98,6 +134,13 @@ const router = createRouter({
     {
       name: 'Student',
       path: '/student',
+      beforeEnter: async (to) => {
+        return to.meta.role === 'student' &&
+        localStorage.getItem('role') === 'student'
+          ? true
+          : '/'
+      },
+      meta: { requiresAuth: true, role: 'student' },
       component: () => import("@/components/studentLayout.vue"),
       children: [
         {
@@ -114,10 +157,33 @@ const router = createRouter({
           name: "Find Quiz",
           path: 'quiz/find',
           component: () => import("@/views/student/QuizFindView.vue")
+        },
+        {
+          name: "Quiz Window",
+          path: 'quiz/:id/attempt',
+          component: () => import("@/views/student/QuizWindow.vue") // QuizAttemptView
         }
       ]
     }
   ],
+})
+
+router.beforeEach(async (to, from, next) => {
+  const loginStore = useLoginStore()
+  loginStore.loadToken()
+  
+  if (
+    to.matched.some(rec => rec.meta.requiresAuth) &&
+    to.matched.some(rec => rec.meta.role)
+  ) {
+    if (!loginStore.isAuthenticated()) {
+      next({ path: '/' })
+    } else {
+      next()
+    }
+  } else {
+    next()
+  }
 })
 
 export default router

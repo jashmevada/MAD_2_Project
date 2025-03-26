@@ -110,10 +110,10 @@
                         :state="validation.instructorEmail" placeholder="Enter your email" required trim></BFormInput>
                     </BFormGroup>
 
-                    <BFormGroup label="Select Your Subject" label-for="instructorSubject"
+                    <BFormGroup label="Select Your Department" label-for="instructorSubject"
                       :state="validation.instructorSubject" :invalid-feedback="errors.instructorSubject">
                       <BFormSelect id="instructorSubject" v-model="form.instructorSubject" value-field="id"
-                        text-field="name" :options="subjectList" :state="validation.instructorSubject"
+                        text-field="name" :options="departmentList" :state="validation.instructorSubject"
                         placeholder="Enter your full name" required trim></BFormSelect>
                     </BFormGroup>
 
@@ -147,7 +147,7 @@
 <script setup>
 import { ref, reactive, computed, onMounted, shallowRef } from 'vue'
 import { Icon } from '@iconify/vue'
-import { apiFetch } from '@/main'
+import { apiFetch } from '@/apiFetch'
 import { useRouter } from 'vue-router'
 
 const router = useRouter()
@@ -228,10 +228,10 @@ const passwordStrengthVariant = computed(() => {
   return 'success'
 })
 
-let subjectList = shallowRef([])
+let departmentList = shallowRef([])
 
 onMounted(async () => {
-  subjectList.value = await apiFetch("/subjects/")
+  departmentList.value = await apiFetch("/departments")
 })
 
 

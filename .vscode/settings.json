@@ -1,4 +1,13 @@
 {
-    "python.analysis.typeCheckingMode": "off",
+    // "python.analysis.typeCheckingMode": "basic",
+    // "python.analysis.autoImportCompletions": true,
+    "[python]": {
+        "diffEditor.ignoreTrimWhitespace": false,
+        "editor.defaultColorDecorators": "never",
+        "editor.defaultFormatter": "charliermarsh.ruff"
+    },
+    "ruff.importStrategy": "fromEnvironment",
+    "ruff.nativeServer": true,
     "python.analysis.autoImportCompletions": true
+
 }

@@ -12,7 +12,7 @@
             </template>
           </BFormSelect>
         </div>
-        <div class="col-md-2">
+        <div class="col-md-3">
           <BFormSelect v-model="departmentFilter" :options="departmentOptions" class="mb-2">
             <template #first>
               <option value="">All Department</option>
@@ -38,26 +38,31 @@
           <template #cell(duration)="data">
             {{ data.value }} minutes
           </template>
+
+          <template #cell(actions)="data">
+          <div class="d-flex gap-2">
+            <BButton size="sm" variant="outline-primary" @click="acceptQuiz(data.item)">
+              Accept
+            </BButton>
+          </div>
+        </template>
         </BTable>
       </BCard>
-  
-      <BModal v-model="showDeleteModal" title="Confirm Deletion" @ok="deleteQuiz">
-        <p>Are you sure you want to delete the quiz "{{ quizToDelete?.title }}"?</p>
-      </BModal>
     </div>
   </template>
   
   <script setup>
   import { ref, computed, onMounted } from 'vue'
   import { Icon } from '@iconify/vue'
-import { apiFetch } from '@/main'
+import { apiFetch } from '@/apiFetch'
   
   const fields = [
     { key: 'title', label: 'Quiz Title', sortable: true },
     { key: 'subject', label: 'Subject', sortable: true },
-    { key: 'date', label: 'Date', sortable: true },
-    { key: 'duration', label: 'Duration', sortable: true },
-    { key: 'totalQuestions', label: 'Questions', sortable: true },
+    { key: 'date_of_quiz', label: 'Date', sortable: true },
+    { key: 'time_duration', label: 'Duration', sortable: true },
+    { key: 'no_of_questions', label: 'Questions', sortable: true },
+    {key: 'actions', label: 'Actions'}  
   ]
   
   const quizzes = ref([])
@@ -68,7 +73,7 @@ onMounted(async () => {
   
   const searchQuery = ref('')
   const subjectFilter = ref('')
-  
+  const departmentFilter = ref('')
   
   const showDeleteModal = ref(false)
   const quizToDelete = ref(null)
@@ -79,6 +84,10 @@ onMounted(async () => {
     return Array.from(subjects).map(subject => ({ value: subject, text: subject }))
   })
   
+  const departmentOptions = computed(() => {
+    const departments = new Set(quizzes.value.map(quiz => quiz.department))
+    return Array.from(departments).map(department => ({ value: department, text: department }))
+  })
   
   const filteredQuizzes = computed(() => {
     let result = quizzes.value
@@ -116,5 +125,10 @@ onMounted(async () => {
     }
   }
   
+  // accept quiz 
+  function acceptQuiz(quiz) {
+
+  }
+  // end 
   </script>
   

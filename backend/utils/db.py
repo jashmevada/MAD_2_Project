@@ -1,7 +1,9 @@
+from flask_socketio import SocketIO
 from sqlalchemy.orm import DeclarativeBase
 from sqlalchemy import MetaData
 from flask_sqlalchemy import SQLAlchemy
-
+from celery import Celery
+import redis
 
 naming_convention = {
     "ix": "ix_%(column_0_label)s",
@@ -16,3 +18,14 @@ class Base(DeclarativeBase):
 
 
 db = SQLAlchemy(model_class=Base)
+
+celery = Celery("Application Tasks")
+
+redis_client = redis.Redis(
+    host='localhost',
+    port=6379,
+    db=0,
+    decode_responses=True
+)
+
+socketio = SocketIO(cors_allowed_origins="*")

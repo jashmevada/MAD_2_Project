@@ -19,7 +19,7 @@
         <BFormGroup id="quiz-subject" label="Subject:" label-for="input-subject">
           <BFormSelect
             id="input-subject"
-            v-model="quiz.subject"
+            v-model="quiz.subject_id"
             placeholder="Enter subject"
             :options="subjectList"
             text-field="name"
@@ -71,7 +71,7 @@
             <BFormGroup id="quiz-duration" label="Duration (minutes):" label-for="input-duration">
               <BFormInput
                 id="input-duration"
-                v-model="quiz.duration"
+                v-model="quiz.time_duration"
                 type="number"
                 min="1"
                 required
@@ -149,33 +149,64 @@
         </div>
       </BForm>
     </BCard>
+    {{ quiz }}
 </template>
   
 <script setup>
-  import { apiFetch } from '@/main'
-  import { BFormSelect } from 'bootstrap-vue-next'
+  import { apiFetch } from '@/apiFetch'
+  import router from '@/router'
+import { useLoginStore } from '@/stores/AuthStore'
+  // import { BFormSelect } from 'bootstrap-vue-next'
   import { ref, reactive, onMounted, shallowRef, computed } from 'vue'
+import { useRoute } from 'vue-router'
   
   const subjectList = shallowRef()
+  const route = useRoute()
 
-  onMounted(async () => {
-    subjectList.value = await apiFetch('/subjects')
-  })
-
-  const quiz = reactive({
+  const quiz_id = route.params?.id
+  let quiz = reactive({
     title: '',
-    subject: '',
+    subject_id: '',
     chapter_id: '',
     date: '',
-    duration: 30,
+    time_duration: 30,
+    remarks: '',
+    created_by: 0,
     questions: []
   })
-  
   const questionCount = ref(1)
-  
   const chapterList = shallowRef() 
+  
+  onMounted(async () => {
+    if (useLoginStore().get_user_data().subject) {
+      subjectList.value = [await apiFetch(`/subjects/${useLoginStore().get_user_data().subject}`)]
+    }   
+    else {
+      subjectList.value = await apiFetch(`/subjects`)
+    }
+    
+
+    if (quiz_id) {
+       const data = await apiFetch(`/quizzes/${quiz_id}`)
+
+       quiz = reactive({
+        title: data.title, 
+        subject_id: data.subject_id,
+        chapter_id: data.chapter_id,
+        date: new Date(data.date).getDate(),
+        time_duration: data.time_duration,
+        remakrs: '',
+        created_by: data.created_by,
+        quistions: []
+       })
+       console.log(data);
+        
+    }
+  })
+
+  
   const updateChapterList = async () => {
-    chapterList.value = await apiFetch(`/subjects/${quiz.subject}/chapters`).catch(() => {return [{id: -1, name: 'Please Select Subject First'}]})
+    chapterList.value = await apiFetch(`/subjects/${quiz.subject_id}/chapters`).catch(() => {return [{id: -1, name: 'Please Select Subject First'}]})
   }
 
   // Initialize with one question
@@ -218,7 +249,6 @@
       const formattedQuiz = {
         ...quiz,
         date_of_quiz: `${quiz.date}T${quiz.time}`,
-        time_duration: quiz.duration,
         questions: quiz.questions.map(q => ({
           question_statement: q.text,
           options: q.options,
@@ -236,13 +266,13 @@
         },
         body: JSON.stringify(formattedQuiz)
       })
-      
-      if (response.ok) {
-        alert('Quiz created successfully!')
-        resetForm()
-      } else {
-        alert('Failed to create quiz. Please try again.')
-      }
+      router.go(-1)
+      // if (response.status === 200) {
+        // alert('Quiz created successfully!')
+        // resetForm()
+      // } else {
+      //   alert('Failed to create quiz. Please try again.')
+      // }
     } catch (error) {
       console.error('Error submitting quiz:', error)
       alert('An error occurred. Please try again.')

@@ -1,18 +1,12 @@
 <script setup>
 import { apiFetch } from '@/apiFetch';
+import { useLoginStore } from '@/stores/AuthStore';
 import { ref, reactive, computed, onMounted } from 'vue';
-import { useRoute, useRouter } from 'vue-router';
 
-// Get route and router
-const route = useRoute();
-const router = useRouter();
-
-// Subject data
 const subject = ref({});
 const chapters = ref([]);
 const loadingChapters = ref(true);
 
-// Chapter form
 const showChapterModal = ref(false);
 const isEditingChapter = ref(false);
 const selectedChapter = ref(null);
@@ -21,39 +15,23 @@ const showDeleteChapterModal = ref(false);
 const chapterForm = reactive({
   id: null,
   title: '',
-  description: ''
+  description: '',
 });
 
-// Chapter fields
 const chapterFields = [
-  // { key: 'order', label: '#', sortable: true },
   { key: 'name', label: 'Title', sortable: true },
   { key: 'description', label: 'Description' },
   { key: 'actions', label: 'Actions' }
 ];
 
-// Form validation
-const chapterValidation = computed(() => {
-  return {
-    title: chapterForm.title.trim() !== ''
-  };
-});
-
-// Fetch subject and its chapters
 const fetchSubjectDetails = async () => {
-  const subjectId = route.params.id;
+  const subjectId = useLoginStore().get_user_data().subject;
 
   try {
-    // Fetch subject details
-    const subjectData = await apiFetch(`/subjects/${subjectId}`);
-    subject.value = await subjectData
+    subject.value = await apiFetch(`/subjects/${subjectId}`);
 
-    // Simulate API response
-
-    // Fetch chapters
     loadingChapters.value = true;
-    const chaptersData = await apiFetch(`/subjects/${subjectId}/chapters`);
-    chapters.value = await chaptersData
+    chapters.value = await apiFetch(`/subjects/${subjectId}/chapters`);
 
   } catch (error) {
     console.error('Error fetching subject details:', error);
@@ -63,6 +41,7 @@ const fetchSubjectDetails = async () => {
 };
 
 // Chapter management functions
+
 const openAddChapterModal = () => {
   isEditingChapter.value = false;
   resetChapterForm();
@@ -106,10 +85,10 @@ const deleteChapter = async () => {
 
 const handleChapterSubmit = async (event) => {
   // Validate form
-  if (!chapterValidation.value.title) {
-    event.preventDefault();
-    return;
-  }
+  // if (!chapterValidation.value.title) {
+  //   event.preventDefault();
+  //   return;
+  // }
 
   try {
     if (isEditingChapter.value) {
@@ -187,10 +166,10 @@ onMounted(() => {
             <BCol md="3" class="fw-bold">Department:</BCol>
             <BCol md="9">{{ subject?.department }}</BCol>
           </BRow>
-          <BRow>
+          <!-- <BRow>
             <BCol md="3" class="fw-bold">Credits:</BCol>
             <BCol md="9">{{ subject?.credits }}</BCol>
-          </BRow>
+          </BRow> -->
           <BRow>
             <BCol md="3" class="fw-bold">Description:</BCol>
             <BCol md="9">{{ subject?.description }}</BCol>
@@ -228,13 +207,10 @@ onMounted(() => {
       @hidden="resetChapterForm" @ok="handleChapterSubmit">
       <BForm @submit.prevent>
         <BFormGroup label="Chapter Title" label-for="chapter-title">
-          <BFormInput id="chapter-title" v-model="chapterForm.title" :state="chapterValidation.title"
-            placeholder="Enter chapter title" required></BFormInput>
-          <BFormInvalidFeedback v-if="!chapterValidation.title">
-            Chapter title is required
-          </BFormInvalidFeedback>
+          <BFormInput id="chapter-title" v-model="chapterForm.title" placeholder="Enter chapter title" required>
+          </BFormInput>
         </BFormGroup>
-<!-- 
+        <!-- 
         <BFormGroup label="Order" label-for="chapter-order">
           <BFormInput id="chapter-order" v-model.number="chapterForm.order" type="number" min="1"
             placeholder="Enter chapter order"></BFormInput>

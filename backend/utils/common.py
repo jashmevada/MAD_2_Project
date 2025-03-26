@@ -1,3 +1,4 @@
+from flask_caching import Cache
 from backend.utils.db import db
 
 # Use this to add a single record to the database
@@ -28,3 +29,6 @@ def do_commit(msg: str | dict = "Success", err_msg: str | dict = "Error"):
     except Exception as e:
         db.session.rollback()
         return {"message": err_msg, "error": f"{e}"}, 500
+    
+    
+cache = Cache()

@@ -3,6 +3,7 @@ import { ref } from "vue"
 import { useLoginStore } from "@/stores/AuthStore"
 
 const loginStore = useLoginStore()
+const loginToast = ref(false)
 
 const email = ref()
 const username = ref()
@@ -16,7 +17,7 @@ async function handleLogin(e) {
   }
   catch (e) {
     console.log(e);
-
+    loginToast.value = true
   }
 }
 
@@ -60,6 +61,17 @@ async function handleLogin(e) {
       </div>
     </div>
   </div>
+
+
+  <Teleport to="body">
+      <div class="toast-container position-fixed p-3 top-0 end-0">
+  <BToast v-model="loginToast" variant="danger">
+    <template #title> Login Failed </template>
+    Incorret Password or Username.
+  </BToast>
+      </div>
+    </Teleport>
+ 
 </template>
 
 <style scoped>

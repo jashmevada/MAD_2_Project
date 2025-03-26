@@ -1,20 +1,20 @@
-from flask import Blueprint, app, current_app, jsonify, request
-from flask_jwt_extended import jwt_required, create_access_token, get_jwt_identity
-from flask_pydantic import validate
+from flask import Blueprint, request
 from flask.views import MethodView
+from flask_jwt_extended import jwt_required
 
-from ..models.model import Instructor, Student, User
-from backend.models.schema import UserLogin, UserModel
 from backend.utils.common import add_db
 
-bp = Blueprint("instructors", __name__, url_prefix="/api/instructors")
+from ..models.model import Instructor
+
+bp = Blueprint("instructors", __name__, url_prefix="/api")
 
 
 class InstructorsAPI(MethodView):
     init_every_request = False
-
+    decorators = [jwt_required()]
+    
     def get(self):
-        approval_arg: bool | None = request.args.get("approval")
+        approval_arg: bool | None = request.args.get("approval", type=bool)
         if approval_arg:
             match approval_arg:
                 case True:
@@ -27,9 +27,21 @@ class InstructorsAPI(MethodView):
     def patch(self):
         pass
 
-@bp.route("/<int:id>/status", methods=['PATCH'])
+
+class SingleInstructorAPI(MethodView):
+    init_every_request = False 
+    decorators = [jwt_required()]
+    
+    def get(self, id: int):
+        return Instructor.query.get_or_404(id)
+
+    def delete(self, id: int):
+        pass
+    
+    
+@jwt_required()
 def update_status(id: int):
-    approval: bool = request.args.get("approval")
+    approval: bool | None = request.args.get("approval", type=bool)
     
     instructor: Instructor = Instructor.query.get_or_404(id)
     
@@ -38,5 +50,9 @@ def update_status(id: int):
         return add_db([instructor], "Success Update", "Failed to update")
 
     return {"msg": "Error"}, 400 
-
-bp.add_url_rule("/", view_func=InstructorsAPI.as_view("instructors_api"))
+    
+    
+# Routes
+bp.add_url_rule("/instructors", view_func=InstructorsAPI.as_view("instructors_api"))
+bp.add_url_rule("/instructors/<int:id>", view_func=SingleInstructorAPI.as_view("single_instructors_api"))
+bp.route("/instructors/<int:id>/status", methods=['PATCH'])(update_status)

@@ -85,15 +85,14 @@
 <script setup>
 import { ref, reactive, computed, onMounted } from 'vue'
 import { useRouter } from 'vue-router'
-import { apiFetch } from '@/main'
-
+import { apiFetch } from '@/apiFetch'
 
 const router = useRouter()
 
 // Table fields definition
 const fields = [
   { key: 'name', label: 'Subject Name', sortable: true },
-  { key: 'code', label: 'Code', sortable: true },
+ //  { key: 'code', label: 'Code', sortable: true },
   { key: 'department', label: 'Department', sortable: true },
   {key:'description' , label:'Description', sortable:true},
   // { key: 'credits', label: 'Credits', sortable: true },
@@ -148,7 +147,7 @@ const fetchSubjects = async () => {
   isLoading.value = true
   try {
     // Replace with your actual API call
-    subjects.value = await apiFetch('subjects')
+    subjects.value = await apiFetch('/subjects')
 
     // Simulated API response
     // await new Promise(resolve => setTimeout(resolve, 800))
@@ -245,15 +244,12 @@ const handleSubmit = async (event) => {
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify(form)
       })
-      // const newSubject = await response.json()
-
-      // Simulate API response
+      
       const newSubject = {
         ...form,
         id: Math.max(0, ...subjects.value.map(s => s.id)) + 1
       }
 
-      // Update local state
       subjects.value.push(newSubject)
 
       // console.log(`Subject "${form.name}" added successfully`)
@@ -278,7 +274,8 @@ const resetForm = () => {
 
 // Fetch subjects on component mount
 onMounted(async () => {
-  await fetchSubjects()
+  await fetchSubjects() 
+  // subjects.value = await apiFetch("/subjects")
 })
 
 const navigateToSubjectDetail = (item) => {

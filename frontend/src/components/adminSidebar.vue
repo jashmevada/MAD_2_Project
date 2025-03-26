@@ -1,78 +1,68 @@
 <template>
   <div class="d-flex">
-    <!-- Sidebar -->
     <div class="sidebar bg-light" :class="{ 'sidebar-open': isSidebarOpen }">
+
       <div class="sidebar-header p-3 border-bottom d-flex align-items-center">
-        <!-- <Icon icon="logos:vue" class="me-2" width="24" /> -->
-        <h4 class="mb-0">Admin Potral</h4>
+        <h4 class="mb-0">Admin Portal</h4>
       </div>
+
       <div class="sidebar-content p-3">
-        <BNav vertical class="sidebar-nav">
-          <BNavItem to="/admin/dashboard" active-class="active" class="sidebar-item">
+        <div v-for="(item, index) in items" :key="index" class="mb-2">
+        
+          <div 
+            v-if="item.children"
+            @click="toggleSubmenu(index)" 
+            class="sidebar-item d-flex align-items-center justify-content-between p-2 cursor-pointer"
+            :class="{ 'active': isActiveParent(item) }"
+          >
             <div class="d-flex align-items-center">
-              <Icon icon="heroicons:home" class="me-3" width="20" />
-              Dashboard
+              <Icon :icon="item.icon" class="me-3" width="20" />
+              {{ item.title }}
             </div>
-          </BNavItem>
+            <Icon 
+              v-if="item.children" 
+              :icon="expandedMenus.includes(index) ? 'heroicons:chevron-down' : 'heroicons:chevron-right'" 
+              width="16" 
+            />
+          </div>
 
-          <BNavItem to="/admin/instructors/verify" active-class="active" class="sidebar-item">
-            <div class="d-flex align-items-center">
-              <Icon icon="heroicons:chat-bubble-left-right" class="me-3" width="20" />
-              Instructors
-              <!-- <BBadge variant="danger" class="ms-2">5</BBadge> -->
-            </div>
-          </BNavItem>
-
-
-          <BNavItem to="/admin/students" active-class="active" class="sidebar-item">
-            <div class="d-flex align-items-center">
-              <Icon icon="heroicons:user-group" class="me-3" width="20" />
-              Students
-            </div>
-          </BNavItem>
-
-          <BNavItem to="/admin/departments" active-class="active" class="sidebar-item">
-            <div class="d-flex align-items-center">
-              <Icon icon="heroicons:queue-list" class="me-3" width="20" />
-              Departments
-            </div>
-          </BNavItem>
-
-          <BNavItem to="/admin/subjects" active-class="active" class="sidebar-item">
-            <div class="d-flex align-items-center">
-              <Icon icon="heroicons:book-open" class="me-3" width="20" />
-              Subjects
-            </div>
-          </BNavItem>
-
-          <BNavItem to="/admin/quiz" active-class="active" class="sidebar-item">
-            <div class="d-flex align-items-center">
-              <Icon icon="heroicons:clipboard" class="me-3" width="20" />
-              Quiz
-            </div>
-          </BNavItem>
-
-          <!-- <router-link to="/analytics" custom v-slot="{ navigate, isActive }">
-            <BNavItem @click="navigate" :active="isActive" class="sidebar-item">
+          <BNav v-else vertical class="sidebar-nav">
+            <BNavItem :to="item.link" active-class="active" class="sidebar-item">
               <div class="d-flex align-items-center">
-                <Icon icon="heroicons:chart-bar" class="me-3" width="20" />
-                Analytics
+                <Icon :icon="item.icon" class="me-3" width="20" />
+                {{ item.title }}
               </div>
             </BNavItem>
-          </router-link> -->
-        </BNav>
+          </BNav>
+
+          <BCollapse :visible="expandedMenus.includes(index) && item.children ? true : false">
+            <BNav vertical class="ms-4 mt-1">
+              <BNavItem 
+                v-for="(child, childIndex) in item.children" 
+                :key="childIndex"
+                :to="child.link" 
+                active-class="active" 
+                class="sidebar-subitem py-1"
+              >
+                <div class="d-flex align-items-center">
+                  <Icon :icon="child.icon" class="me-2" width="16" />
+                  {{ child.title }}
+                </div>
+              </BNavItem>
+            </BNav>
+          </BCollapse>          
+        </div>
 
         <div class="mt-4 pt-3 border-top">
           <h6 class="text-muted text-uppercase small fw-bold mb-3">User</h6>
           <div class="d-flex align-items-center mb-3">
-            <Icon icon="material-symbols:account-circle-outline" class="me-2" width="32" height="32"></Icon>
-            <!-- <BAvatar src="https://i.pravatar.cc/150?img=12" size="md" class="me-2"></BAvatar> -->
+            <BAvatar src="https://i.pravatar.cc/150?img=12" size="md" class="me-2"></BAvatar>
             <div>
-              <div class="fw-bold">Jash</div>
-              <small class="text-muted">Administrator</small>
+              <div class="fw-bold">{{ loginStore.get_user_data().username }}</div>
+              <!-- <small class="text-muted">Administrator</small> -->
             </div>
           </div>
-          <BButton to='/' variant="outline-danger" size="sm" class="d-flex align-items-center w-100">
+          <BButton variant="outline-danger" size="sm" @click="loginStore.logout()" class="d-flex align-items-center w-100">
             <Icon icon="heroicons:arrow-right-on-rectangle" class="me-2" width="16" />
             Logout
           </BButton>
@@ -86,7 +76,7 @@
         <BButton variant="outline-primary" class="me-2 toggle-btn" @click="toggleSidebar">
           <Icon :icon="isSidebarOpen ? 'heroicons:bars-3-bottom-left' : 'heroicons:bars-3'" width="20" />
         </BButton>
-        <BNavbarBrand href="#">{{ $route.name }}</BNavbarBrand>
+        <BNavbarBrand :href="$route.path">{{ $route.name }}</BNavbarBrand>
 
         <div class="ms-auto d-flex align-items-center">
           <BButton variant="light" class="me-2">
@@ -106,25 +96,77 @@
 </template>
 
 <script setup>
-import { ref } from 'vue'
-import { BNav, BNavItem, BNavbar, BNavbarBrand, BButton, BAvatar, BBadge } from 'bootstrap-vue-next'
+import { ref, onMounted, computed} from 'vue'
 import { Icon } from '@iconify/vue'
+import { useRoute } from 'vue-router'
+import { useRouter } from 'vue-router'
+import { useLoginStore } from '@/stores/AuthStore'
 
+const route = useRoute()
 const isSidebarOpen = ref(true)
+const expandedMenus = ref([])
+const loginStore = useLoginStore()
 
 const toggleSidebar = () => {
   isSidebarOpen.value = !isSidebarOpen.value
 }
 
-const items = [
-  { title: 'home', link: '', icon: '' }
-]
+const toggleSubmenu = (index) => {
+  const position = expandedMenus.value.indexOf(index)
+  if (position !== -1) {
+    expandedMenus.value.splice(position, 1)
+  } else {
+    expandedMenus.value.push(index)
+  }
+}
 
+const isActiveParent = (item) => {
+  if (!item.children) return false
+  return item.children.some(child => route.path.startsWith(child.link))
+}
+
+const initializeExpandedMenus = () => {
+  items.forEach((item, index) => {
+    if (item.children && item.children.some(child => route.path.startsWith(child.link))) {
+      if (!expandedMenus.value.includes(index)) {
+        expandedMenus.value.push(index)
+      }
+    }
+  })
+}
+
+
+onMounted(() => {
+  initializeExpandedMenus()
+
+})
+
+const items = [
+  { 
+    title: 'Home', 
+    link: '/admin/dashboard', 
+    icon: 'heroicons:home' 
+  },
+  { title: 'Instructors', link: '/admin/instructors/verify', icon: 'heroicons:chat-bubble-left-right' },
+  { title: 'Students', link: '/admin/students', icon: 'heroicons:user-group' },
+  { title: 'Departments', link: '/admin/departments', icon: 'heroicons:queue-list' },
+  { title: 'Subjects', link: '/admin/subjects', icon: 'heroicons:book-open' },
+  { 
+    title: 'Quizzes', 
+    icon: 'heroicons:clipboard',
+    children: [
+      { title: 'Quizzes', link: '/admin/quiz', icon: 'heroicons:magnifying-glass' },
+      { title: 'My Quizzes', link: '#', icon: 'heroicons:document-text' },
+      // { title: 'Create Quiz', link: 'quiz/create', icon: 'heroicons:plus-circle' },
+      { title: 'Quiz History', link: '#', icon: 'heroicons:clock' }
+    ]
+  },
+]
 </script>
 
 <style scoped>
 .sidebar {
-  width: 280px;
+  width: 240px;
   height: 100vh;
   position: fixed;
   top: 0;
@@ -144,8 +186,8 @@ const items = [
 }
 
 .main-content {
-  margin-left: 280px;
-  width: calc(100% - 280px);
+  margin-left: 240px;
+  width: calc(100% - 240px);
   transition: margin-left 0.3s ease, width 0.3s ease;
   min-height: 100vh;
 }
@@ -156,13 +198,20 @@ const items = [
 }
 
 .sidebar-nav {
-  margin-top: 1rem;
+  margin-top: 0.5rem;
 }
 
 .sidebar-item {
   border-radius: 0.5rem;
   margin-bottom: 0.25rem;
   transition: all 0.2s;
+  cursor: pointer;
+}
+
+.sidebar-subitem {
+  border-radius: 0.5rem;
+  transition: all 0.2s;
+  font-size: 0.9rem;
 }
 
 /* Active item styling */
@@ -172,10 +221,17 @@ const items = [
   box-shadow: 0 2px 5px rgba(0, 0, 0, 0.1);
 }
 
-
+.sidebar-item.active {
+  background-color: rgba(59, 130, 246, 0.2);
+  font-weight: bold;
+}
 
 .sidebar-item:hover:not(.active) {
   background-color: rgba(59, 130, 246, 0.1);
+}
+
+.sidebar-subitem:hover:not(.active) {
+  background-color: rgba(59, 130, 246, 0.05);
 }
 
 .toggle-btn {
@@ -186,5 +242,9 @@ const items = [
 .toggle-btn:hover,
 .toggle-btn:focus {
   background-color: rgba(0, 0, 0, 0.05);
+}
+
+.cursor-pointer {
+  cursor: pointer;
 }
 </style>

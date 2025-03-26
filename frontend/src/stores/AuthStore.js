@@ -13,8 +13,7 @@ export const useLoginStore = defineStore('login', {
     }),
     actions: {
         async login(email, password) {
-            // http://${import.meta.env.VITE_HOST}:5000/api/login
-            const response = await ofetch(`${import.meta.env.VITE_HOST}/api/login`, {
+            const data = await ofetch(`${import.meta.env.VITE_HOST}/api/login`, {
                 method: 'POST',
                 body: { username: email, password: password },
                 async onResponseError({ response }) {
@@ -22,9 +21,9 @@ export const useLoginStore = defineStore('login', {
                 },
             })
 
-            this.token = response.access_token
-            this.role = response.role
-            this.user = response.data
+            this.token = data.access_token
+            this.role = data.role
+            this.user = data.data
 
             if (this.token !== '') {
                 localStorage.setItem('token', this.token) // Save token to localStorage

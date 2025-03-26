@@ -1,17 +1,15 @@
 <template>
-  <div class="subjects-container p-4">
-    <div class="d-flex justify-content-between align-items-center mb-4">
-      <!-- <h2>Subjects Management</h2> -->
-      <BButton variant="primary" @click="openAddModal">
-        <i class="bi bi-plus-circle me-2"></i> Add Student
-      </BButton>
+  <div class="container mt-2">
+    <div class="row mb-4">
+      <div class="col-md-6">
+        <BFormInput v-model="searchQuery" placeholder="Search Students..." type="search" class="mb-2" />
+      </div>
     </div>
 
-    <!-- Subjects Table -->
     <BCard>
-      <BTable hover responsive :items="subjects" :fields="fields" :busy="isLoading" show-empty
-        empty-text="No subjects found" @row-clicked="navigateToSubjectDetail">
-        <!-- Loading state -->
+      <BTable  hover responsive :items="filteredStudents" :fields="fields" :busy="isLoading" show-empty
+        empty-text="No subjects found">
+
         <template #table-busy>
           <div class="text-center my-2">
             <BSpinner class="align-middle"></BSpinner>
@@ -32,20 +30,23 @@
       </BTable>
     </BCard>
   </div>
+
+  <BModal v-model="showDeleteModal" title="Confirm Delete" ok-variant="danger" ok-title="Delete" @ok="deleteSubject">
+      <p class="my-4">Are you sure you want to delete the Student "{{ selectedStudent?.full_name }}"?</p>
+      <p class="text-danger">This action cannot be undone.</p>
+  </BModal>
+
 </template>
 
 <script setup>
 
 import { ref, reactive, computed, onMounted } from 'vue'
 import { useRouter } from 'vue-router'
-import { apiFetch } from '@/main'
+import { apiFetch } from '@/apiFetch'
 
-
-const router = useRouter()
-const subjects = ref([])
+const students = ref([])
 const isLoading = ref(true)
 
-// Table fields definition
 const fields = [
   { key: 'full_name', label: 'Name', sortable: true },
   { key: 'code', label: 'Code', sortable: true },
@@ -53,10 +54,10 @@ const fields = [
   { key: 'actions', label: 'Actions' }
 ]
 
-const fetchSubjects = async () => {
+const fetchStudents = async () => {
   isLoading.value = true
   try {
-    subjects.value = await apiFetch('/students')
+    students.value = await apiFetch('/students')
   } catch (error) {
     console.error('Error fetching subjects:', error)
   } finally {
@@ -64,10 +65,56 @@ const fetchSubjects = async () => {
   }
 }
 
-
 onMounted(async () => {
-  await fetchSubjects()
+  await fetchStudents()
 })
+
+// Filters 
+const searchQuery = ref('')
+const subjectFilter = ref('')
+
+const filteredStudents = computed(() => {
+  let result = students.value
+
+  if (subjectFilter.value) {
+    result = result.filter(quiz => quiz.subject === subjectFilter.value)
+  }
+
+  if (searchQuery.value) {
+    const query = searchQuery.value.toLowerCase()
+    result = result.filter(quiz =>
+      quiz.full_name.toLowerCase().includes(query) 
+      // quiz.subject.toLowerCase().includes(query)
+    )
+  }
+
+  return result
+})
+// End
+
+
+// Delete Modal 
+const showDeleteModal = ref(false)
+const selectedStudent = ref(null)
+
+const confirmDelete = (student) => {
+  selectedStudent.value = student
+  showDeleteModal.value = true
+}
+
+const deleteSubject = async () => {
+  if (!selectedStudent.value) return
+
+  try {
+    await apiFetch(`/students/${selectedStudent.value.id}`, { method: 'DELETE' })
+
+    students.value = students.value.filter(s => s.id !== selectedStudent.value.id)
+
+    console.log(`Subject "${selectedStudent.value.name}" deleted successfully`)
+  } catch (error) {
+    console.error('Error deleting subject:', error)
+  }
+}
 
 </script>
 

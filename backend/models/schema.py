@@ -1,7 +1,7 @@
 from datetime import datetime, timedelta, time, date
 from typing import Dict, List
 from typing_extensions import Annotated, Literal, Optional, Union
-from pydantic import BaseModel, Field
+from pydantic import BaseModel, Field, field_validator, validator
 
 
 class QueryRegisterModel(BaseModel):
@@ -52,18 +52,34 @@ class ChapterModel(BaseModel):
 
 class QuestionModel(BaseModel):
     question_statement: str
-    options: Dict[int , str]
+    # options: Dict[int , str]
+    options: List[str]
     correct_option: int
 
 class QuizCreateModel(BaseModel):
     title: str
-    subject: int 
+    subject_id: int | None = None 
     chapter_id: int
     date_of_quiz: datetime
-    time_duration: str = Field(..., pattern=r'^\d{2}:\d{2}$')
+    time_duration: float
+    created_by: int
+    # time_duration: str = Field(..., pattern=r'^\d{2}:\d{2}$')
     remarks: Optional[str] = None
     questions: List[QuestionModel]
 
+class QuizQueryModel(BaseModel):
+    subject_id: int | None = None
+
+class TimerStartSchema(BaseModel):
+    quiz_id: int
+    duration: int  # in seconds
+    
+    @field_validator('duration')
+    def validate_duration(cls, v):
+        if v <= 0:
+            raise ValueError('Duration must be positive')
+        return v
+    
 # class QuestionCreate(BaseModel):
 #     quiz_id: int
 #     question_statement: str

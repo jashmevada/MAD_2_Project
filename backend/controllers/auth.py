@@ -72,9 +72,3 @@ def register(body: UserModel):
         return jsonify({"message": "User registered"}), 201
     
     return {"message": "Error"}, 500
-
-
-@bp.route("/test")
-@jwt_required()
-def test():
-    return jsonify({"d": "a"})

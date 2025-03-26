@@ -50,7 +50,7 @@
           </BButton>
         </div>
       </template>
-    </BTable>
+    </BTable>\
 
     <BModal v-model="showModal" :title="`Instructor Details: ${selectedInstructor?.name || ''}`" size="lg" hide-footer>
       <div v-if="selectedInstructor" class="p-2">
@@ -104,7 +104,7 @@
 
 <script setup>
 import { ref, onMounted } from 'vue'
-import { apiFetch } from '@/main'
+import { apiFetch } from '@/apiFetch'
 
 // Table fields definition
 const fields = [
@@ -112,8 +112,8 @@ const fields = [
   { key: 'email', label: 'Email', sortable: true },
   { key: 'qualification', label: 'Qualification', sortable: true},
   { key: 'department', label: 'Department', sortable: true },
-  { key: 'requestDate', label: 'Requested On', sortable: true },
-  { key: 'approval', label: 'Approval', sortable: true },
+  // { key: 'requestDate', label: 'Requested On', sortable: true },
+  // { key: 'approval', label: 'Approval', sortable: true },
   { key: 'actions', label: 'Actions' }
 ]
 
@@ -142,7 +142,6 @@ const fetchInstructors = async () => {
   }
 }
 
-// Get appropriate badge variant based on status
 const getStatusVariant = (status) => {
   switch (status) { 
     case 'Approved': return 'success'

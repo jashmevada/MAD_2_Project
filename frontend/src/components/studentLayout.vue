@@ -36,7 +36,7 @@
           </BNav>
 
           <!-- Submenu items -->
-          <BCollapse :visible="expandedMenus.includes(index) && item.children">
+          <BCollapse :visible="expandedMenus.includes(index) && item.children ? true : false">
             <BNav vertical class="ms-4 mt-1">
               <BNavItem 
                 v-for="(child, childIndex) in item.children" 
@@ -62,11 +62,11 @@
           <div class="d-flex align-items-center mb-3">
             <BAvatar src="https://i.pravatar.cc/150?img=12" size="md" class="me-2"></BAvatar>
             <div>
-              <div class="fw-bold">John Doe</div>
-              <small class="text-muted">Administrator</small>
+              <div class="fw-bold">{{loginStore.get_user_data().full_name}}</div>
+              <small class="text-muted">{{loginStore.get_user_data().username}}</small>
             </div>
           </div>
-          <BButton variant="outline-danger" size="sm" class="d-flex align-items-center w-100">
+          <BButton variant="outline-danger" size="sm" @click="loginStore.logout" class="d-flex align-items-center w-100">
             <Icon icon="heroicons:arrow-right-on-rectangle" class="me-2" width="16" />
             Logout
           </BButton>
@@ -103,10 +103,12 @@
 import { ref, computed , onMounted} from 'vue'
 import { Icon } from '@iconify/vue'
 import { useRoute } from 'vue-router'
+import { useLoginStore } from '@/stores/AuthStore'
 
 const route = useRoute()
 const isSidebarOpen = ref(true)
 const expandedMenus = ref([])
+const loginStore = useLoginStore()
 
 const toggleSidebar = () => {
   isSidebarOpen.value = !isSidebarOpen.value

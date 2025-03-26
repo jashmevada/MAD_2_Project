@@ -5,18 +5,18 @@
       <div class="col-md-6">
         <BFormInput v-model="searchQuery" placeholder="Search quizzes..." type="search" class="mb-2" />
       </div>
-      <div class="col-md-3">
-        <BFormSelect v-model="subjectFilter" :options="subjectOptions" class="mb-2">
-          <template #first>
-            <option value="">All Subjects</option>
-          </template>
-        </BFormSelect>
-      </div>
+      <!-- <div class="col-md-3">
+          <BFormSelect v-model="subjectFilter" :options="subjectOptions" class="mb-2">
+            <template #first>
+              <option value="">All Subjects</option>
+            </template>
+</BFormSelect>
+</div> -->
       <div class="col-md-3">
         <BButton variant="success" @click='$router.push("quiz/create")'>
           <Icon icon="heroicons:plus-circle" class="me-2" width="24" />Quiz
         </BButton>
-      </div>  
+      </div>
     </div>
 
     <BCard>
@@ -50,30 +50,6 @@
       </BTable>
     </BCard>
 
-    <BModal v-model="showModal" :title="isEditing ? 'Edit Quiz' : 'Add New Quiz'" @ok="saveQuiz">
-      <BForm>
-        <BFormGroup label="Title">
-          <BFormInput v-model="currentQuiz.title" required />
-        </BFormGroup>
-
-        <BFormGroup label="Subject">
-          <BFormInput v-model="currentQuiz.subject" required />
-        </BFormGroup>
-
-        <BFormGroup label="Date">
-          <BFormInput v-model="currentQuiz.date" type="date" required />
-        </BFormGroup>
-
-        <BFormGroup label="Duration (minutes)">
-          <BFormInput v-model="currentQuiz.duration" type="number" required />
-        </BFormGroup>
-
-        <BFormGroup label="Total Questions">
-          <BFormInput v-model="currentQuiz.totalQuestions" type="number" required />
-        </BFormGroup>
-      </BForm>
-    </BModal>
-
     <BModal v-model="showDeleteModal" title="Confirm Deletion" @ok="deleteQuiz">
       <p>Are you sure you want to delete the quiz "{{ quizToDelete?.title }}"?</p>
     </BModal>
@@ -85,10 +61,11 @@ import { ref, computed, onMounted } from 'vue'
 import { Icon } from '@iconify/vue'
 import { apiFetch } from '@/apiFetch'
 import router from '@/router'
+import { useLoginStore } from '@/stores/AuthStore'
 
 const fields = [
   { key: 'title', label: 'Quiz Title', sortable: true },
-  { key: 'subject', label: 'Subject', sortable: true },
+  // { key: 'subject', label: 'Subject', sortable: true },
   { key: 'date_of_quiz', label: 'Date', sortable: true },
   { key: 'time_duration', label: 'Duration', sortable: true },
   { key: 'no_of_questions', label: 'Questions', sortable: true },
@@ -101,7 +78,7 @@ const quizzes = ref([])
 const searchQuery = ref('')
 const subjectFilter = ref('')
 
-
+const loginStore = useLoginStore()
 const showModal = ref(false)
 const showDeleteModal = ref(false)
 const isEditing = ref(false)
@@ -109,7 +86,9 @@ const currentQuiz = ref({})
 const quizToDelete = ref(null)
 
 onMounted(async () => {
-  quizzes.value = await apiFetch("/quizzes")
+  quizzes.value = await apiFetch("/quizzes", {
+    query: { subject_id: loginStore.get_user_data().subject }
+  })
 })
 
 const subjectOptions = computed(() => {
@@ -191,11 +170,19 @@ const confirmDelete = (quiz) => {
   showDeleteModal.value = true
 }
 
-const deleteQuiz = () => {
-  if (quizToDelete.value) {
-    quizzes.value = quizzes.value.filter(q => q.id !== quizToDelete.value.id)
-    quizToDelete.value = null
+const deleteQuiz = async () => {
+
+  try {
+    if (quizToDelete.value) {
+      const resp = await apiFetch(`/quizzes/${quizToDelete.value.id}`, { method: 'DELETE' })
+      quizzes.value = quizzes.value.filter(q => q.id !== quizToDelete.value.id)
+      quizToDelete.value = null
+    }
+    showDeleteModal.value = false
   }
-  showDeleteModal.value = false
+  catch (e) {
+    console.log(e);
+
+  }
 }
 </script>

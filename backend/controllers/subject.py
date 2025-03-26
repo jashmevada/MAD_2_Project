@@ -5,7 +5,7 @@ from flask.views import MethodView
 
 from backend.models.model import Instructor, Student, User
 from ..models.schema import SubjectCreate
-from backend.utils.common import add_db, do_commit
+from backend.utils.common import add_db, do_commit, cache
 from ..models.model import Subject
 
 bp = Blueprint("subject", __name__, url_prefix="/api")  
@@ -13,7 +13,9 @@ bp = Blueprint("subject", __name__, url_prefix="/api")
 
 class SubjectsAPI(MethodView):
     init_every_request = False
-
+    decorators = [jwt_required()]
+    
+    # @cache.cached(timeout=60)
     def get(self):
         return [i.to_dict() for i in Subject.query.all()]
 
@@ -26,6 +28,7 @@ class SubjectsAPI(MethodView):
 
 class SingleSubjectAPI(MethodView):
     init_every_request = False
+    decorators = [jwt_required()]
 
     def get(self, id):
         return Subject.query.get_or_404(id).to_dict()
@@ -45,5 +48,5 @@ class SingleSubjectAPI(MethodView):
 
 
 
-bp.add_url_rule("/subjects/", view_func=SubjectsAPI.as_view("subjects_api"))
+bp.add_url_rule("/subjects", view_func=SubjectsAPI.as_view("subjects_api"))
 bp.add_url_rule("/subjects/<int:id>", view_func=SingleSubjectAPI.as_view("SingleSubjectAPI"))

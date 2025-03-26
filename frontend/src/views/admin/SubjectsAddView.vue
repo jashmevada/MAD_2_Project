@@ -92,7 +92,7 @@
 </template>
 
 <script setup>
-import { apiFetch } from '@/main';
+import { apiFetch } from '@/apiFetch';
 import { ref, reactive, onMounted } from 'vue';
 
 // Form data

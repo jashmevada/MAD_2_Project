@@ -7,7 +7,7 @@
       </div>
 
       <div class="sidebar-content p-3">
-        <BNav vertical class="sidebar-nav" v-for="i in items">
+        <BNav vertical class="sidebar-nav" v-for="(i, index) in items" :key="index">
           <BNavItem :to="i.link" active-class="active" class="sidebar-item">
             <div class="d-flex align-items-center">
               <Icon :icon="i.icon" class="me-3" width="20" />
@@ -17,15 +17,16 @@
         </BNav>
 
         <div class="mt-4 pt-3 border-top">
-          <h6 class="text-muted text-uppercase small fw-bold mb-3">User</h6>
+          <h6 class="text-muted text-uppercase small fw-bold mb-3">User</h6>  
           <div class="d-flex align-items-center mb-3">
-            <BAvatar src="https://i.pravatar.cc/150?img=12" size="md" class="me-2"></BAvatar>
+            <!-- <BAvatar src="https://i.pravatar.cc/150?img=12" size="md" class="me-2"></BAvatar> -->
             <div>
-              <div class="fw-bold">John Doe</div>
-              <small class="text-muted">Administrator</small>
+              <div class="fw-bold">{{loginStore.get_user_data().name}}</div>
+              <small class="text-muted">{{ loginStore.get_user_data().username }}</small>
+              <!-- Instructor -->
             </div>
           </div>
-          <BButton variant="outline-danger" size="sm" class="d-flex align-items-center w-100">
+          <BButton variant="outline-danger" @click="loginStore.logout" size="sm" class="d-flex align-items-center w-100">
             <Icon icon="heroicons:arrow-right-on-rectangle" class="me-2" width="16" />
             Logout
           </BButton>
@@ -62,17 +63,19 @@
 import { ref } from 'vue'
 import { BNav, BNavItem, BNavbar, BNavbarBrand, BButton, BAvatar, BBadge } from 'bootstrap-vue-next'
 import { Icon } from '@iconify/vue'
+import { useLoginStore } from '@/stores/AuthStore'
 
 const isSidebarOpen = ref(true)
+const loginStore = useLoginStore()
 
 const toggleSidebar = () => {
   isSidebarOpen.value = !isSidebarOpen.value
 }
 
 const items = [
-  { title: 'Home', link: '/instructor', icon: 'heroicons:home' },
-  { title: 'Subjects', link: '/subjects', icon: 'heroicons:user-group' },
-  { title: 'Quiz', link: '/quiz', icon: 'heroicons:clipboard' }
+  { title: 'Home', link: '/instructor/dashboard', icon: 'heroicons:home' },
+  { title: 'Chapters', link: '/instructor/chapters', icon: 'heroicons:user-group' },
+  { title: 'Quiz', link: '/instructor/quiz', icon: 'heroicons:clipboard' }
 ]
 
 </script>

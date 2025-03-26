@@ -1,8 +1,9 @@
-from flask import Blueprint, current_app, jsonify
+from flask import Blueprint, current_app, jsonify, request
 from flask_jwt_extended import jwt_required, create_access_token, get_jwt_identity
 from flask_pydantic import validate
 from flask.views import MethodView
 
+from backend.utils.db import db
 from ..models.schema import ChapterModel, SubjectCreate
 from backend.utils.common import add_db, do_commit
 from ..models.model import Subject, Chapter, Instructor, Student, User
@@ -24,6 +25,11 @@ class ChaptersAPI(MethodView):
         print(chapters)
         return add_db([chapters], "Sucess", "Failed")
 
+    def delete(self):
+        chapter_id: int = request.args.get("id")
+        chapter = Chapter.query.get_or_404(chapter_id)
+        db.session.delete(chapter)
+        return do_commit("Chapter deleted successfully", "Chapter could not be deleted")
 
 class SingleChapterAPI(MethodView):
     init_every_request = False
@@ -43,7 +49,7 @@ class SingleChapterAPI(MethodView):
         return do_commit("Sucess", "Failed")
 
     def patch(self, id):
-        pass
+        pass   
 
 bp.add_url_rule("/chapters", view_func=ChaptersAPI.as_view("chapters_api"))
 bp.add_url_rule("/subjects/<int:id>/chapters", view_func=SingleChapterAPI.as_view("SingleChapterAPI"))
