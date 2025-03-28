@@ -1,19 +1,21 @@
-from flask import Blueprint, current_app, jsonify, request
-from flask_jwt_extended import jwt_required, create_access_token, get_jwt_identity
+from flask import Blueprint, current_app, request
+from flask_jwt_extended import jwt_required
 from flask_pydantic import validate
 from flask.views import MethodView
 
 from backend.utils.db import db
-from ..models.schema import ChapterModel, SubjectCreate
-from backend.utils.common import add_db, do_commit
-from ..models.model import Subject, Chapter, Instructor, Student, User
+from ..models.schema import ChapterModel
+from backend.utils.common import add_db, do_commit, cache
+from ..models.model import Subject, Chapter
 
 bp = Blueprint("chapters", __name__, url_prefix="/api")
 
 
 class ChaptersAPI(MethodView):
     init_every_request = False
+    decorators = [jwt_required()]
 
+    @cache.cached(timeout=30)
     def get(self):
         return [i.to_dict() for i in Chapter.query.all()]
 
@@ -33,6 +35,7 @@ class ChaptersAPI(MethodView):
 
 class SingleChapterAPI(MethodView):
     init_every_request = False
+    decorators = [jwt_required()]
 
     def get(self, id):
         sub: Subject | None = Subject.query.get_or_404(id)
@@ -42,14 +45,21 @@ class SingleChapterAPI(MethodView):
     def post(self, id, body: ChapterModel):
         sub: Subject | None = Subject.query.get_or_404(id)
         chapters = Chapter(
-            name=body.title, description=body.description
+            name=body.name, description=body.description
         )
-        print(chapters)
         sub.chapters.append(chapters)
         return do_commit("Sucess", "Failed")
 
-    def patch(self, id):
-        pass   
+@validate()
+@jwt_required()
+def update_chapter(id: int, body: ChapterModel):
+    chapter: Chapter = Chapter.query.get_or_404(id)
+        
+    chapter.description = body.description
+    chapter.name = body.name
+        
+    return do_commit()
 
 bp.add_url_rule("/chapters", view_func=ChaptersAPI.as_view("chapters_api"))
+bp.route("/chapters/<int:id>", methods=['PUT'])(update_chapter)
 bp.add_url_rule("/subjects/<int:id>/chapters", view_func=SingleChapterAPI.as_view("SingleChapterAPI"))

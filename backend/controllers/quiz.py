@@ -8,7 +8,7 @@ from flask.views import MethodView
 
 from ..models.model import Instructor, Quiz, Question, TimerSession, User
 from backend.models.schema import QuizCreateModel, QuizQueryModel
-from backend.utils.common import add_db
+from backend.utils.common import add_db, cache
 from ..utils.db import db, redis_client
 
 bp = Blueprint("quiz", __name__, url_prefix="/api")
@@ -18,25 +18,24 @@ class QuizAPI(MethodView):
     init_every_request = False
     decorators = [jwt_required()]
     
+    @cache.cached(timeout=30)
     @validate()
     def get(self, query: QuizQueryModel):
-        user_id = get_jwt_identity()
-        user: User = User.query.get(user_id)
+        # user_id = get_jwt_identity()
+        # user: User = User.query.get(user_id)
         
         if query.subject_id:
             return [i.to_dict() for i in Quiz.query.filter_by()]
         
-        if user.role == 'admin':
-            return [i.to_dict() for i in Quiz.query.all()], 200
-        else:
-            return {'error': 'You are not Admin'}, 401
+        
+        return [i.to_dict() for i in Quiz.query.all()], 200
 
     @validate()
     def post(self, body: QuizCreateModel):
         quiz = Quiz(**body.model_dump(exclude=["questions", 'subject_id']))
 
         for question in body.questions:
-            quiz.questions.append(Question(
+            quiz.questions.add(Question(
                 question_statement=question.question_statement,
                 options={i: option for i, option in enumerate(question.options)},
                 correct_option=question.correct_option
@@ -50,13 +49,44 @@ class SingleQuizAPI(MethodView):
     init_every_request = False 
     decorators = [jwt_required()]
     
-    def get(self, id):
+    def get(self, id:int):
         return Quiz.query.get_or_404(id).to_dict(), 200 
-        # quiz = Quiz.query.get(id)
-        # if quiz:
-        #     return quiz.to_dict(), 200
-        # return {"message": "Quiz not found"}, 404
 
+    @validate()
+    def put(self, id: int, body: QuizCreateModel):
+        quiz: Quiz = Quiz.query.get_or_404(id)
+        # # _quiz()
+        # quiz = _quiz(**body.model_dump(exclude=["questions", 'subject_id']))
+
+        for key, value in body.model_dump(exclude=["questions", 'subject_id']).items():
+            setattr(quiz, key, value)
+        
+        # what can happend 
+        # 1. change in old question
+        # 2. add / remove question 
+        # 
+        quiz.questions.clear()
+        
+        for question in body.questions:
+            # if question.id: 
+            #     q: Question = Question.query.get_or_404(question.id)
+                
+            #     q.question_statement = question.question_statement
+            #     q.options = {i: option for i, option in enumerate(question.options)}
+            #     q.correct_option = question.correct_option
+            #     quiz.questions.add(q)
+            # else:
+            quiz.questions.add(Question(
+                question_statement=question.question_statement,
+                options={i: option for i, option in enumerate(question.options)},
+                correct_option=question.correct_option
+            ))
+
+        print(f"Quiz: {quiz.to_dict()} \n Questions: {[i.to_dict() for i in quiz.questions]}")
+        # return {"msg": "ok it work"}, 200 
+        return add_db([quiz], "Sucess", "Failed")
+        
+    
     def delete(self, id: int):
         quiz: Quiz = Quiz.query.get_or_404(id)
 
@@ -65,7 +95,24 @@ class SingleQuizAPI(MethodView):
             return {'msg': 'DELETED'}, 200
         except Exception as e:
             return {"error", f"{e}"}, 500
-        
+  
+
+@jwt_required()
+def get_questions(quiz_id):
+    quiz: Quiz = Quiz.query.get_or_404(quiz_id)
+    user_id = get_jwt_identity()
+    # print(quiz.date_of_quiz)
+    user: User = User.query.get_or_404(user_id)
+    
+    if quiz.date_of_quiz <= datetime.now():
+        return [i.to_dict() for i in quiz.questions], 200
+    elif user.role == 'admin' or user.role == 'instructor':
+        return [i.to_dict() for i in quiz.questions], 200
+    
+    return {"error": "Quiz is not ready."}, 400 
+
+# ------------------
+      
 def format_sse(data, event=None):
     msg = f"data: {json.dumps(data)}\n\n"
     if event is not None:
@@ -73,8 +120,7 @@ def format_sse(data, event=None):
     return msg
 
 # SSE endpoints
-# @bp.route('/quizzes/<int:quiz_id>/timer-stream/<int:user_id>')
-@jwt_required()
+# @jwt_required()
 def timer_stream(quiz_id, user_id):
     """SSE endpoint that streams timer updates"""
     def generate():
@@ -141,8 +187,6 @@ def timer_stream(quiz_id, user_id):
     response.headers["X-Accel-Buffering"] = "no"  # For Nginx
     return response
 
-# API endpoints
-# @bp.route('/quizzes/<int:quiz_id>/start-timer', methods=['POST'])
 @jwt_required()
 def start_timer(quiz_id):
     """Start a new timer for a quiz"""
@@ -201,7 +245,6 @@ def start_timer(quiz_id):
         "duration": duration
     })
 
-# @bp.route('/quizzes/<int:quiz_id>/end-timer', methods=['POST'])
 @jwt_required()
 def end_timer(quiz_id):
     """End a timer session"""
@@ -227,7 +270,6 @@ def end_timer(quiz_id):
     
     return jsonify({"error": "Timer session not found"}), 404
 
-# @bp.route('/quizzes/timer/<int:timer_session_id>', methods=['GET'])
 @jwt_required()
 def get_timer(timer_session_id):
     """Get the current time remaining for a timer session."""
@@ -270,7 +312,6 @@ def get_timer(timer_session_id):
         current_app.logger.error(f"Error getting timer: {str(e)}")
         return jsonify({'error': str(e)}), 400
 
-# @bp.route('/quizzes/<int:quiz_id>/save-answer', methods=['POST'])
 @jwt_required()
 def save_answer(quiz_id):
     """Save an individual answer during the quiz."""
@@ -303,9 +344,8 @@ def save_answer(quiz_id):
         
     except Exception as e:
         current_app.logger.error(f"Error saving answer: {str(e)}")
-        return jsonify({'error': str(e)}), 400
+        return jsonify({'error': str(e)}), 401
 
-# @bp.route('/quizzes/<int:quiz_id>/submit', methods=['POST'])
 @jwt_required()
 def submit_quiz(quiz_id):
     """Submit all answers and end the quiz."""
@@ -352,6 +392,7 @@ def submit_quiz(quiz_id):
 # API Routes 
 bp.add_url_rule("/quizzes", view_func=QuizAPI.as_view("quiz_api"))
 bp.add_url_rule("/quizzes/<int:id>", view_func=SingleQuizAPI.as_view("single_quiz_api"))
+bp.route("/quizzes/<int:quiz_id>/questions")(get_questions)
 
 bp.route('/quizzes/timer/<int:timer_session_id>', methods=['GET'])(get_timer)
 bp.route('/quizzes/<int:quiz_id>/end-timer', methods=['POST'])(end_timer)

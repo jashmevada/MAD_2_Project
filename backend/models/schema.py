@@ -9,7 +9,7 @@ class QueryRegisterModel(BaseModel):
 
 class InstructorCreateModel(BaseModel):
     user_role: Literal["instructor"]
-    subject: int | None = None
+    department: int | None = None
     qualification: str
     name: str
 
@@ -32,14 +32,18 @@ class UserLogin(BaseModel):
     password: str
 
 
+class DepartmentModel(BaseModel):
+    title: str 
+    description: str 
+
 class SubjectCreate(BaseModel):
     name: str
-    department: str
+    department: int
     description: Optional[str] = None
 
 
 class ChapterModel(BaseModel):
-    title: str
+    name: str
     description: Optional[str] = None
     # subject: Optional[SubjectCreate] = None
 
@@ -51,6 +55,7 @@ class ChapterModel(BaseModel):
 #     subject_id: int
 
 class QuestionModel(BaseModel):
+    id: int | None = None
     question_statement: str
     # options: Dict[int , str]
     options: List[str]

@@ -20,7 +20,7 @@ const showDeleteChapterModal = ref(false);
 
 const chapterForm = reactive({
   id: null,
-  title: '',
+  name: '',
   description: ''
 });
 
@@ -35,7 +35,7 @@ const chapterFields = [
 // Form validation
 const chapterValidation = computed(() => {
   return {
-    title: chapterForm.title.trim() !== ''
+    title: chapterForm.name.trim() !== ''
   };
 });
 
@@ -72,7 +72,8 @@ const openAddChapterModal = () => {
 const editChapter = (chapter) => {
   isEditingChapter.value = true;
   selectedChapter.value = chapter;
-
+  console.log(chapter);
+  
   // Populate form with chapter data
   Object.keys(chapterForm).forEach(key => {
     if (key in chapter) {
@@ -114,11 +115,11 @@ const handleChapterSubmit = async (event) => {
   try {
     if (isEditingChapter.value) {
       // Update existing chapter
-      // await fetch(`/api/chapters/${chapterForm.id}`, {
-      //   method: 'PUT',
-      //   headers: { 'Content-Type': 'application/json' },
-      //   body: JSON.stringify(chapterForm)
-      // });
+      await apiFetch(`/chapters/${chapterForm.id}`, {
+        method: 'PUT',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify(chapterForm)
+      });
 
       // Update local state
       const index = chapters.value.findIndex(c => c.id === chapterForm.id);
@@ -228,7 +229,7 @@ onMounted(() => {
       @hidden="resetChapterForm" @ok="handleChapterSubmit">
       <BForm @submit.prevent>
         <BFormGroup label="Chapter Title" label-for="chapter-title">
-          <BFormInput id="chapter-title" v-model="chapterForm.title" :state="chapterValidation.title"
+          <BFormInput id="chapter-title" v-model="chapterForm.name" :state="chapterValidation.title"
             placeholder="Enter chapter title" required></BFormInput>
           <BFormInvalidFeedback v-if="!chapterValidation.title">
             Chapter title is required

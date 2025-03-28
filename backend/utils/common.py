@@ -9,6 +9,7 @@ def add_db(models, msg: str | dict = "Success", err_msg: str | dict = "Error"):
         return {"message": msg}, 200
     except Exception as e:
         db.session.rollback()
+        # raise e
         return {"message": err_msg, "error": f"{e}"}, 500
 
 # Use this to update/add multiple records in the database

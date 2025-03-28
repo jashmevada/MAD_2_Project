@@ -113,7 +113,7 @@
                     <BFormGroup label="Select Your Department" label-for="instructorSubject"
                       :state="validation.instructorSubject" :invalid-feedback="errors.instructorSubject">
                       <BFormSelect id="instructorSubject" v-model="form.instructorSubject" value-field="id"
-                        text-field="name" :options="departmentList" :state="validation.instructorSubject"
+                        text-field="title" :options="departmentList" :state="validation.instructorSubject"
                         placeholder="Enter your full name" required trim></BFormSelect>
                     </BFormGroup>
 
@@ -341,7 +341,7 @@ const submitForm = async () => {
           ...(form.role === 'instructor' ? {
             name: form.instructorName,
             qualification: form.instructorQualifications,
-            subject: form.instructorSubject
+            department: form.instructorSubject
           } : {})
         },
         email: form.role === 'student' ? form.email : form.instructorEmail,

@@ -152,19 +152,19 @@ const items = [
     link: '/student/dashboard', 
     icon: 'heroicons:home' 
   },
-  { 
-    title: 'Subjects', 
-    link: '/subjects', 
-    icon: 'heroicons:user-group' 
-  },
+  // { 
+  //   title: 'Subjects', 
+  //   link: '/subjects', 
+  //   icon: 'heroicons:user-group' 
+  // },
   { 
     title: 'Quizzes', 
     icon: 'heroicons:clipboard',
     children: [
-      { title: 'Find Quiz', link: 'quiz/find', icon: 'heroicons:magnifying-glass' },
-      { title: 'My Quizzes', link: 'quiz/my-quizzes', icon: 'heroicons:document-text' },
+      { title: 'Find Quiz', link: '/student/quiz/find', icon: 'heroicons:magnifying-glass' },
+      { title: 'My Quizzes', link: '/student/quiz/my-quizzes', icon: 'heroicons:document-text' },
       // { title: 'Create Quiz', link: 'quiz/create', icon: 'heroicons:plus-circle' },
-      { title: 'Quiz History', link: 'quiz/history', icon: 'heroicons:clock' }
+      { title: 'Quiz History', link: '/student/quiz/history', icon: 'heroicons:clock' }
     ]
   },
 ]

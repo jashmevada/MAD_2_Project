@@ -1,6 +1,6 @@
 from datetime import datetime, date, timedelta
 from typing import List, Optional, Set
-from sqlalchemy import Column, ForeignKey, DateTime, Date, Integer, String, Table
+from sqlalchemy import Column, ForeignKey, DateTime, Date, Integer, String, Table, update
 from sqlalchemy.orm import relationship, Mapped, mapped_column
 from sqlalchemy.ext.hybrid import hybrid_property
 from sqlalchemy.ext.mutable import MutableDict
@@ -45,9 +45,26 @@ class Admin(User):
 #     student_id: Mapped[int] = mapped_column(ForeignKey("student.id"), primary_key=True)
 #     quiz_id: Mapped[int] = mapped_column(ForeignKey("quizzes.id"), primary_key=True)
 #     score_id: Mapped[int] = mapped_column(ForeignKey("quizzes.id"), primary_key=True)
+# Association table for Student-Quiz
+class QuizAssignment(db.Model):
+    __tablename__ = "quiz_assignment"
     
+    student_id: Mapped[int] = mapped_column(ForeignKey("student.id"), primary_key=True)
+    quiz_id: Mapped[int] = mapped_column(ForeignKey("quizzes.id"), primary_key=True)
+    assigned_at: Mapped[datetime] = mapped_column(default=datetime.now)
+    accepted: Mapped[bool] = mapped_column(default=False)
+    accepted_at: Mapped[Optional[datetime]]
+    completed: Mapped[bool] = mapped_column(default=False)
+    accepted_at: Mapped[Optional[datetime]]
+    
+    student: Mapped['Student'] = relationship(back_populates="quiz_assignments")
+    quiz: Mapped['Quiz'] = relationship(back_populates="student_assignments")    
 
 class Student(User):
+    __mapper_args__ = {
+        "polymorphic_identity": "student",
+    }
+    
     id: Mapped[int] = mapped_column(ForeignKey(User.id), primary_key=True)
     full_name: Mapped[str]
     qualification: Mapped[str]
@@ -56,14 +73,22 @@ class Student(User):
     
     scores: Mapped["Score"] = relationship(back_populates="user")
     # quizzes: Mapped[List['Quiz']] = relationship(secondary="student_quiz", back_populates="students")
+    # assigned_quizzes: Mapped["Quiz"] = relationship(secondary="quiz_assignment", back_populates="assigned_students")
+    quiz_assignments: Mapped[Set['QuizAssignment']] = relationship(back_populates="student")
+
     
-    __mapper_args__ = {
-        "polymorphic_identity": "student",
-    }
 
     def __repr__(self):
         return f"<Student {self.full_name}>"
 
+    def accept_quiz(self, quiz_id):
+        for assignment in self.quiz_assignments:
+            if assignment.quiz_id == quiz_id:
+                assignment.accepted = True
+                assignment.accepted_at = datetime.now()
+                return True
+        return False
+    
     def to_dict(self):
         return {
             "id": self.id,
@@ -105,7 +130,7 @@ class Instructor(User):
             "qualification": self.qualification,
             "name": self.name,
             "username": self.username,
-            "subject": self.subject,
+            "dep_id": self.department,
             "email": self.email,
         }
 
@@ -119,6 +144,13 @@ class Department(db.Model):
     
     subjects: Mapped[List['Subject']] = relationship(cascade="all, delete")
     instructors: Mapped[Set["Instructor"]] = relationship(secondary="instructor_department", back_populates="Idepartment")
+    
+    def to_dict(self):
+        return {
+            "id": self.id,
+            "title": self.title, 
+            "description": self.description
+        }
     
 class Subject(db.Model):
     __tablename__ = "subjects"
@@ -163,7 +195,6 @@ class Chapter(db.Model):
             "subjects": self.subject.to_dict(),
         }
 
-
 class Quiz(db.Model):
     __tablename__ = "quizzes"
     id: Mapped[int] = mapped_column(primary_key=True)
@@ -179,12 +210,12 @@ class Quiz(db.Model):
     
     chapter: Mapped["Chapter"] = relationship(back_populates="quizzes")
     # subject: Mapped["Subject"] = relationship(back_populates="quizzes")
-    questions: Mapped[List["Question"]] = relationship(
-        "Question", back_populates="quiz"
-    )
-    scores: Mapped["Score"] = relationship("Score", back_populates="quiz")
+    questions: Mapped[Set["Question"]] = relationship("Question", back_populates="quiz", cascade="all, delete-orphan", passive_deletes=True)
+    scores: Mapped["Score"] = relationship("Score", back_populates="quiz", cascade="all, delete-orphan", passive_deletes=True)
+    # assigned_students: Mapped["Student"] = relationship( secondary="quiz_assignment", back_populates="assigned_quizzes")
     # students: Mapped['Student'] = relationship(secondary=StudentQuiz, back_populates="quizzes")
     # created_by_user: Mapped["User"] = relationship("User")
+    student_assignments: Mapped[Set['QuizAssignment']] = relationship(back_populates="quiz", cascade="all, delete-orphan")
 
     @hybrid_property
     def no_of_questions(self) -> int:
@@ -195,13 +226,13 @@ class Quiz(db.Model):
             "id": self.id,
             "title": self.title,
             "chapter_id": self.chapter_id,
-            "subject": self.chapter.subject.name,
+            # "subject": self.chapter.subject.name,
             "subject_id": self.chapter.subject.id,
             "date_of_quiz": self.date_of_quiz.strftime("%Y-%m-%d %H:%M:%S"), # .strftime("%Y-%m-%d %H:%M:%S")
             "time_duration": self.time_duration,
             "remarks": self.remarks,
             "no_of_questions": self.no_of_questions,
-            "question": [question.to_dict() for question in self.questions],
+            # "question": [question.to_dict() for question in self.questions],
         }
 
 class TimerSession(db.Model):
@@ -214,8 +245,9 @@ class TimerSession(db.Model):
     duration_seconds: Mapped[int] 
     is_active: Mapped[bool] = mapped_column(default=True)
     
-    quiz = db.relationship('Quiz', backref='timer_sessions')
-    user = db.relationship('User', backref='timer_sessions')
+    
+    quiz: Mapped['Quiz'] = relationship(backref='timer_sessions', cascade="all, delete")
+    user: Mapped['User'] = relationship(backref='timer_sessions')
     
     @hybrid_property
     def end_time(self):

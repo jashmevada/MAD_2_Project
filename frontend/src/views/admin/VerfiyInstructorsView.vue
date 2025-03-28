@@ -11,7 +11,7 @@
     </BAlert>
 
 
-    <BTable v-else hover responsive :items="instructors" :fields="fields" striped>
+    <BTable v-else hover responsive :items="instructors" :fields="fields" striped show-empty>
 
       <!-- <template #cell(name)="data">
         <div class="d-flex align-items-center">
@@ -23,7 +23,9 @@
           </div>
         </div>
       </template> -->
-
+      <template #empty>
+    <h4>No Instructors To Verify</h4>
+  </template>
       <!-- Status column with badge -->
       <template #cell(status)="data">
         <BBadge :variant="getStatusVariant(data.value)">
@@ -50,7 +52,7 @@
           </BButton>
         </div>
       </template>
-    </BTable>\
+    </BTable>
 
     <BModal v-model="showModal" :title="`Instructor Details: ${selectedInstructor?.name || ''}`" size="lg" hide-footer>
       <div v-if="selectedInstructor" class="p-2">

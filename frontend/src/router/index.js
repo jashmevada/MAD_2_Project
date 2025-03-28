@@ -77,11 +77,11 @@ const router = createRouter({
         {
           name: 'Edit Quiz',
           path: 'quiz/:id/edit',
-          component: () => import("@/views/QuizCreateView.vue")
+          component: () => import("@/views/QuizEditView.vue")
         },
         {
           path: 'subjects/:id',
-          name: 'Subject Detail',
+          name: 'Admin Subject Detail',
           component: () => import("@/views/admin/SubjectDetailView.vue")
         }
       ]
@@ -123,12 +123,11 @@ const router = createRouter({
           path: 'quiz/:id/edit',
           component: () => import("@/views/QuizCreateView.vue")
         },
-
-        // {
-        //   path: '/subjects/:id',
-        //   name: "Subject Detail",
-        //   component: () => import("@/views/admin/SubjectDetailView.vue")
-        // }
+        {
+          path: 'subjects/:id',
+          name: 'Instructor Subject Detail',
+          component: () => import("@/views/admin/SubjectDetailView.vue")
+        }
       ]
     },
     {
@@ -148,15 +147,20 @@ const router = createRouter({
           path: 'dashboard',
           component: () => import("@/views/student/DashboardView.vue")
         },
-        {
-          name: 'Quiz',
-          path: 'quiz',
-          component: () => import("@/views/student/QuizView.vue")
-        },
+        // {
+        //   name: 'Quiz',
+        //   path: 'quiz',
+        //   component: () => import("@/views/student/QuizView.vue")
+        // },
         {
           name: "Find Quiz",
           path: 'quiz/find',
           component: () => import("@/views/student/QuizFindView.vue")
+        },
+        {
+          name: 'Your Accept Quizzes',
+          path: 'quiz/my-quizzes',
+          component: () => import("@/views/student/QuizView.vue")
         },
         {
           name: "Quiz Window",
@@ -164,7 +168,7 @@ const router = createRouter({
           component: () => import("@/views/student/QuizWindow.vue") // QuizAttemptView
         }
       ]
-    }
+    },
   ],
 })
 

@@ -137,14 +137,21 @@ const loadQuiz = async () => {
   try {
     loading.value = true;
     quiz.value = await apiFetch(`quizzes/${route.params.id}`);
-  
-    
+
     // Initialize user answers array
-    userAnswers.value = new Array(quiz.value.question.length).fill(null);
+    try {
+      quiz.value.question = await apiFetch(`quizzes/${route.params.id}/questions` )
+      userAnswers.value = new Array(quiz.value.question.length).fill(null);
+    } catch {
+      userAnswers.value = []
+    }
     
     // Check if quiz has started
     const now = new Date();
     const startDate = new Date(quiz.value.date_of_quiz);
+    console.log(startDate);
+    console.log(now);
+    
     
     if (now >= startDate) {
       quizStarted.value = true;
@@ -152,6 +159,8 @@ const loadQuiz = async () => {
       connectToTimerStream();
     } else {
       // Start countdown
+      console.log("Countdown");
+      
       startCountdown(startDate);
     }
   } catch (error) {
@@ -300,10 +309,13 @@ const selectOption = (optionIndex) => {
 
 const saveCurrentAnswer = async () => {
   try {
-    await axios.post(`/quizzes/${route.params.id}/save-answer`, {
-      question_id: currentQuestion.value.id,
-      selected_option: selectedOption.value.toString(),
-      user_id: 1
+    await apiFetch(`/quizzes/${route.params.id}/save-answer`, {
+      method: "POST",
+      body: {
+        question_id: currentQuestion.value.id,
+        selected_option: selectedOption.value.toString(),
+        user_id: 1
+      }
     });
   } catch (error) {
     console.error('Error saving answer:', error);

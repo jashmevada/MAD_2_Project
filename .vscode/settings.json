@@ -8,6 +8,7 @@
     },
     "ruff.importStrategy": "fromEnvironment",
     "ruff.nativeServer": true,
-    "python.analysis.autoImportCompletions": true
+    "python.analysis.autoImportCompletions": true,
+    "oxc.enable": true
 
 }

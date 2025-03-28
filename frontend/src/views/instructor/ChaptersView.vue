@@ -1,233 +1,216 @@
-<script setup>
-import { apiFetch } from '@/apiFetch';
-import { useLoginStore } from '@/stores/AuthStore';
-import { ref, reactive, computed, onMounted } from 'vue';
-
-const subject = ref({});
-const chapters = ref([]);
-const loadingChapters = ref(true);
-
-const showChapterModal = ref(false);
-const isEditingChapter = ref(false);
-const selectedChapter = ref(null);
-const showDeleteChapterModal = ref(false);
-
-const chapterForm = reactive({
-  id: null,
-  title: '',
-  description: '',
-});
-
-const chapterFields = [
-  { key: 'name', label: 'Title', sortable: true },
-  { key: 'description', label: 'Description' },
-  { key: 'actions', label: 'Actions' }
-];
-
-const fetchSubjectDetails = async () => {
-  const subjectId = useLoginStore().get_user_data().subject;
-
-  try {
-    subject.value = await apiFetch(`/subjects/${subjectId}`);
-
-    loadingChapters.value = true;
-    chapters.value = await apiFetch(`/subjects/${subjectId}/chapters`);
-
-  } catch (error) {
-    console.error('Error fetching subject details:', error);
-  } finally {
-    loadingChapters.value = false;
-  }
-};
-
-// Chapter management functions
-
-const openAddChapterModal = () => {
-  isEditingChapter.value = false;
-  resetChapterForm();
-  showChapterModal.value = true;
-};
-
-const editChapter = (chapter) => {
-  isEditingChapter.value = true;
-  selectedChapter.value = chapter;
-
-  // Populate form with chapter data
-  Object.keys(chapterForm).forEach(key => {
-    if (key in chapter) {
-      chapterForm[key] = chapter[key];
-    }
-  });
-
-  showChapterModal.value = true;
-};
-
-const confirmDeleteChapter = (chapter) => {
-  selectedChapter.value = chapter;
-  showDeleteChapterModal.value = true;
-};
-
-const deleteChapter = async () => {
-  if (!selectedChapter.value) return;
-
-  try {
-    // Delete chapter
-    await apiFetch("/chapters", { method: 'DELETE', query: { id: selectedChapter.value.id } });
-
-    // Update local state
-    chapters.value = chapters.value.filter(c => c.id !== selectedChapter.value.id);
-
-    console.log(`Chapter "${selectedChapter.value.title}" deleted successfully`);
-  } catch (error) {
-    console.error('Error deleting chapter:', error);
-  }
-};
-
-const handleChapterSubmit = async (event) => {
-  // Validate form
-  // if (!chapterValidation.value.title) {
-  //   event.preventDefault();
-  //   return;
-  // }
-
-  try {
-    if (isEditingChapter.value) {
-      // Update existing chapter
-      // await fetch(`/api/chapters/${chapterForm.id}`, {
-      //   method: 'PUT',
-      //   headers: { 'Content-Type': 'application/json' },
-      //   body: JSON.stringify(chapterForm)
-      // });
-
-      // Update local state
-      const index = chapters.value.findIndex(c => c.id === chapterForm.id);
-      if (index !== -1) {
-        chapters.value[index] = { ...chapterForm };
-      }
-
-      console.log(`Chapter "${chapterForm.title}" updated successfully`);
-    } else {
-      // Add new chapter
-      const response = await apiFetch(`/subjects/${subject.value.id}/chapters`, {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify(chapterForm)
-      });
-      // const newChapter = await response.json();
-
-      // Simulate API response
-      const newChapter = {
-        ...chapterForm,
-        id: Math.max(0, ...chapters.value.map(c => c.id)) + 1
-      };
-
-      // Update local state
-      chapters.value.push(newChapter);
-
-      console.log(`Chapter "${chapterForm.title}" added successfully`);
-    }
-  } catch (error) {
-    console.error('Error saving chapter:', error);
-    event.preventDefault();
-  }
-};
-
-const resetChapterForm = () => {
-  chapterForm.id = null;
-  chapterForm.title = '';
-  // chapterForm.order = chapters.value.length + 1;
-  chapterForm.description = '';
-  selectedChapter.value = null;
-};
-
-// Fetch data on component mount
-onMounted(() => {
-  fetchSubjectDetails();
-});
-
-</script>
-
 <template>
-  <div class="subject-detail-container p-4">
-    <BCard no-body>
-      <!-- Subject Header -->
-      <BCardHeader class="d-flex justify-content-between align-items-center">
-        <h3>{{ subject.name }}</h3>
-        <BButton variant="outline-secondary" @click="$router.go(-1)">
-          <i class="bi bi-arrow-left"></i> Back
-        </BButton>
-      </BCardHeader>
+  <div class="subjects-container p-4">
+    <div class="d-flex justify-content-between align-items-center mb-4">
+      <!-- <h2>Subjects Management</h2> -->
+      <BButton variant="primary" @click="openAddModal">
+        <i class="bi bi-plus-circle me-2"></i> Add New Subject
+      </BButton>
+    </div>
 
-      <BCardBody>
-        <!-- Subject Details -->
-        <div class="mb-4">
-          <h5 class="border-bottom pb-2">Subject Information</h5>
-          <BRow>
-            <BCol md="3" class="fw-bold">Department:</BCol>
-            <BCol md="9">{{ subject?.department }}</BCol>
-          </BRow>
-          <!-- <BRow>
-            <BCol md="3" class="fw-bold">Credits:</BCol>
-            <BCol md="9">{{ subject?.credits }}</BCol>
-          </BRow> -->
-          <BRow>
-            <BCol md="3" class="fw-bold">Description:</BCol>
-            <BCol md="9">{{ subject?.description }}</BCol>
-          </BRow>
-        </div>
+    <BCard>
+      <BTable hover responsive :items="subjects" :fields="fields" :busy="isLoading" show-empty
+        empty-text="No subjects found" @row-clicked="navigateToSubjectDetail">
+        <template #table-busy>
+          <div class="text-center my-2">
+            <BSpinner class="align-middle"></BSpinner>
+            <strong class="ms-2">Loading...</strong>
+          </div>
+        </template>
 
-        <!-- Chapters Section -->
-        <div>
-          <div class="d-flex justify-content-between align-items-center mb-3">
-            <h5 class="border-bottom pb-2 mb-0">Chapters</h5>
-            <BButton variant="primary" size="sm" @click="openAddChapterModal">
-              <i class="bi bi-plus-circle"></i> Add Chapter
+        <template #cell(actions)="{ item }">
+          <div class="d-flex gap-2">
+            <BButton size="sm" variant="outline-primary" @click="editSubject(item)">
+              <!-- <i class="bi bi-pencil">d</i>  -->
+              Edit
+            </BButton>
+            <BButton size="sm" variant="outline-danger" @click="confirmDelete(item)">
+              <!-- <i class="bi bi-trash"></i> -->
+               Delete
             </BButton>
           </div>
-
-          <BTable hover :items="chapters" :fields="chapterFields" :busy="loadingChapters" show-empty
-            empty-text="No chapters found for this subject">
-            <template #cell(actions)="{ item }">
-              <div class="d-flex gap-2">
-                <BButton size="sm" variant="outline-primary" @click="editChapter(item)">
-                  <i class="bi bi-pencil"></i> Edit
-                </BButton>
-                <BButton size="sm" variant="outline-danger" @click="confirmDeleteChapter(item)">
-                  <i class="bi bi-trash"></i> Delete
-                </BButton>
-              </div>
-            </template>
-          </BTable>
-        </div>
-      </BCardBody>
+        </template>
+      </BTable>
     </BCard>
 
-    <!-- Add/Edit Chapter Modal -->
-    <BModal v-model="showChapterModal" :title="isEditingChapter ? 'Edit Chapter' : 'Add New Chapter'"
-      @hidden="resetChapterForm" @ok="handleChapterSubmit">
+    <BModal v-model="showModal" :title="isEditing ? 'Edit Subject' : 'Add New Subject'" @hidden="resetForm"
+      @ok="handleSubmit" :ok-title="isEditing ? 'Update' : 'Save'">
       <BForm @submit.prevent>
-        <BFormGroup label="Chapter Title" label-for="chapter-title">
-          <BFormInput id="chapter-title" v-model="chapterForm.title" placeholder="Enter chapter title" required>
-          </BFormInput>
+        <BFormGroup label="Name" label-for="subject-name">
+          <BFormInput id="subject-name" v-model="form.name" placeholder="Enter subject name" required></BFormInput>
         </BFormGroup>
-        <!-- 
-        <BFormGroup label="Order" label-for="chapter-order">
-          <BFormInput id="chapter-order" v-model.number="chapterForm.order" type="number" min="1"
-            placeholder="Enter chapter order"></BFormInput>
-        </BFormGroup> -->
 
-        <BFormGroup label="Description" label-for="chapter-description">
-          <BFormTextarea id="chapter-description" v-model="chapterForm.description"
-            placeholder="Enter chapter description" rows="3"></BFormTextarea>
+        <BFormGroup label="Description" label-for="description">
+          <BFormTextarea id="description" v-model="form.description" placeholder="Enter subject description" rows="3">
+          </BFormTextarea>
         </BFormGroup>
       </BForm>
     </BModal>
 
-    <!-- Delete Chapter Confirmation Modal -->
-    <BModal v-model="showDeleteChapterModal" title="Confirm Delete" ok-variant="danger" ok-title="Delete"
-      @ok="deleteChapter">
-      <p class="my-4">Are you sure you want to delete the chapter "{{ selectedChapter?.title }}"?</p>
+    <BModal v-model="showDeleteModal" title="Confirm Delete" ok-variant="danger" ok-title="Delete" @ok="deleteSubject">
+      <p class="my-4">Are you sure you want to delete the subject "{{ selectedSubject?.name }}"?</p>
       <p class="text-danger">This action cannot be undone.</p>
     </BModal>
   </div>
 </template>
+
+<script setup>
+import { ref, reactive, computed, onMounted } from 'vue'
+import { useRouter } from 'vue-router'
+import { apiFetch } from '@/apiFetch'
+import { useLoginStore } from '@/stores/AuthStore'
+
+const router = useRouter()
+
+const fields = [
+  { key: 'name', label: 'Subject Name', sortable: true },
+  { key: 'department', label: 'Department', sortable: true },
+  {key:'description' , label:'Description', sortable:true},
+  { key: 'actions', label: 'Actions' }
+]
+
+const subjects = ref([])
+const isLoading = ref(true)
+const showModal = ref(false)
+const showDeleteModal = ref(false)
+const isEditing = ref(false)
+const selectedSubject = ref(null)
+const loginStore = useLoginStore()
+
+// Form data
+const form = reactive({
+  name: '',
+  department: loginStore.get_user_data().dep_id,
+  description: '',
+})
+
+const validation = computed(() => {
+  return {
+    name: form.name?.trim() !== '',
+    description: form.description !== ''
+  }
+})
+
+const isFormValid = computed(() => {
+  return Object.values(validation.value).every(valid => valid)
+})
+
+const fetchSubjects = async () => {
+  isLoading.value = true
+  try {
+    subjects.value = await apiFetch(`/departments/${loginStore.get_user_data().dep_id}/subjects`)
+  } catch (error) {
+    console.error('Error fetching subjects:', error)
+  } finally {
+    isLoading.value = false
+  }
+}
+
+// Open add subject modal
+const openAddModal = () => {
+  isEditing.value = false
+  resetForm()
+  showModal.value = true
+}
+
+// Edit subject
+const editSubject = (subject) => {
+  isEditing.value = true
+  selectedSubject.value = subject
+
+  // Populate form with subject data
+  Object.keys(form).forEach(key => {
+    if (key in subject) {
+      form[key] = subject[key]
+    }
+  })
+
+  showModal.value = true
+}
+
+// Confirm delete
+const confirmDelete = (subject) => {
+  selectedSubject.value = subject
+  showDeleteModal.value = true
+}
+
+// Delete subject
+const deleteSubject = async () => {
+  if (!selectedSubject.value) return
+
+  try {
+    // Replace with your actual API call
+    await apiFetch(`/subjects/${selectedSubject.value.id}`, { method: 'DELETE' })
+
+    // Update local state
+    subjects.value = subjects.value.filter(s => s.id !== selectedSubject.value.id)
+
+    // Show success message (you can implement a toast notification here)
+    console.log(`Subject "${selectedSubject.value.name}" deleted successfully`)
+  } catch (error) {
+    console.error('Error deleting subject:', error)
+  }
+}
+
+const handleSubmit = async (event) => {
+  if (!isFormValid.value) {
+    event.preventDefault()
+    return
+  }
+
+  try {
+    if (isEditing.value) {
+      await apiFetch(`/subjects/${form.id}`, {
+        method: 'PUT',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify(form)
+      })
+
+      const index = subjects.value.findIndex(s => s.id === form.id)
+      if (index !== -1) {
+        subjects.value[index] = { ...form }
+      }
+
+      console.log(`Subject "${form.name}" updated successfully`)
+    } else {
+      const response = await apiFetch('/subjects', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify(form)
+      })
+      
+      const newSubject = {
+        ...form,
+        id: Math.max(0, ...subjects.value.map(s => s.id)) + 1
+      }
+
+      subjects.value.push(newSubject)
+    }
+  } catch (error) {
+    console.error('Error saving subject:', error)
+    event.preventDefault()
+  }
+}
+
+// Reset form
+const resetForm = () => {
+  form.name = ''
+  form.department = loginStore.get_user_data().dep_id
+  form.description = ''
+  selectedSubject.value = null
+}
+
+onMounted(async () => {
+  await fetchSubjects() 
+})
+
+const navigateToSubjectDetail = (item) => {
+  router.push(`/instructor/subjects/${item.id}`)
+}
+</script>
+
+<style scoped>
+.subjects-container {
+  max-width: 1200px;
+  margin: 0 auto;
+}
+</style>

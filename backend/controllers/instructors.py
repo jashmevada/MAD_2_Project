@@ -2,7 +2,7 @@ from flask import Blueprint, request
 from flask.views import MethodView
 from flask_jwt_extended import jwt_required
 
-from backend.utils.common import add_db
+from backend.utils.common import add_db, do_commit
 
 from ..models.model import Instructor
 
@@ -45,9 +45,9 @@ def update_status(id: int):
     
     instructor: Instructor = Instructor.query.get_or_404(id)
     
-    if approval or approval == "true" or approval == "false":
+    if approval:
         instructor.approval = True if approval == "true" else False  
-        return add_db([instructor], "Success Update", "Failed to update")
+        return do_commit("Success Update", "Failed to update")
 
     return {"msg": "Error"}, 400 
     

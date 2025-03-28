@@ -3,12 +3,12 @@ import flask
 from flask.logging import default_handler
 from flask_cors import CORS
 from logging.config import dictConfig
-from flask_jwt_extended import JWTManager, get_jwt_identity, jwt_required
+from flask_jwt_extended import JWTManager
 from flask_migrate import Migrate
 
 from .utils.init_db import create_initial_data
 from .utils.common import cache
-from .controllers import subject, auth, instructors, chapters, students, quiz
+from .controllers import subject, auth, instructors, chapters, students, quiz,departments
 from .config import LocalDevelopmentConfig
 from .utils.db import db,celery
 
@@ -89,6 +89,6 @@ app.register_blueprint(subject.bp)
 app.register_blueprint(chapters.bp)
 app.register_blueprint(students.bp)
 app.register_blueprint(quiz.bp)
-
+app.register_blueprint(departments.bp)
 if __name__ == "__main__":
     app.run(debug=True)

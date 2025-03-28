@@ -17,16 +17,30 @@
           </div>
         </template>
 
+        <template #cell(full_name)="{item}">
+          <div class="user-info">
+          <div class="user-name"><strong>{{ item.full_name }}</strong></div>
+          <div class="user-username text-muted">@{{ item.username }}</div>
+          </div>
+        </template>
+
         <template #cell(actions)="{ item }">
           <div class="d-flex gap-2">
-            <BButton size="sm" variant="outline-primary" @click="editSubject(item)">
+            <!-- <BButton size="sm" variant="outline-primary" @click="editSubject(item)">
               <i class="bi bi-pencil"></i> Edit
-            </BButton>
+            </BButton> -->
             <BButton size="sm" variant="outline-danger" @click="confirmDelete(item)">
               <i class="bi bi-trash"></i> Delete
             </BButton>
           </div>
         </template>
+
+        
+        <template #cell(dob)="{item}">
+          {{ formatDate(item.dob) }}
+        </template>
+
+
       </BTable>
     </BCard>
   </div>
@@ -49,8 +63,8 @@ const isLoading = ref(true)
 
 const fields = [
   { key: 'full_name', label: 'Name', sortable: true },
-  { key: 'code', label: 'Code', sortable: true },
-  { key: 'department', label: 'Department', sortable: true },
+  {key: 'qualification', label: 'Qulification'},
+  {key: 'dob', label: 'DOB'},
   { key: 'actions', label: 'Actions' }
 ]
 
@@ -116,6 +130,20 @@ const deleteSubject = async () => {
   }
 }
 
+const formatDate = (dateString) => {
+    try {
+      let t = new Date(dateString)
+      return t.toLocaleDateString('en-IN', {
+        day: '2-digit',
+        month: 'short',
+        year: 'numeric'
+      })
+    } catch (e) {
+      console.log("error");
+  
+      return dateString
+    }
+  }
 </script>
 
 <style scoped>

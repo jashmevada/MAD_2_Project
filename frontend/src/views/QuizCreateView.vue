@@ -116,8 +116,8 @@
             <BFormRadio
               v-model="question.correctAnswer"
               :value="oIndex"
-              name="correct-answer"
-            >
+              :name="`c-ans-${oIndex}-${qIndex}`"
+              >
               Correct
             </BFormRadio>
           </div>
@@ -149,7 +149,6 @@
         </div>
       </BForm>
     </BCard>
-    {{ quiz }}
 </template>
   
 <script setup>
