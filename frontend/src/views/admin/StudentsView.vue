@@ -128,7 +128,7 @@ const deleteSubject = async () => {
   try {
     await apiFetch(`/students/${selectedStudent.value.id}`, { method: 'DELETE' })
 
-    toast.show?.({props: {title: 'Delete Subject', value: true, variant: 'success', body: `Subject "${selectedStudent.value.name}" deleted successfully`}})
+    toast.show?.({props: {title: 'Delete Student', variant: 'success', body: `Student "${selectedStudent.value.full_name}" deleted successfully`}})
     
     students.value = students.value.filter(s => s.id !== selectedStudent.value.id)
   } catch (error) {

@@ -1,4 +1,3 @@
-from flask_socketio import SocketIO
 from sqlalchemy.orm import DeclarativeBase
 from sqlalchemy import MetaData
 from flask_sqlalchemy import SQLAlchemy
@@ -24,5 +23,3 @@ redis_client = redis.Redis(
     db=0,
     decode_responses=True
 )
-
-socketio = SocketIO(cors_allowed_origins="*")

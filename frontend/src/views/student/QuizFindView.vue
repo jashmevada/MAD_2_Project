@@ -49,14 +49,19 @@
         </BTable>
       </BCard>
     </div>
-  </template>
+
+    <BToastOrchestrator />
+
+</template>
   
 <script setup>
   import { ref, computed, onMounted, shallowRef } from 'vue'
   import { apiFetch } from '@/apiFetch'
   import { useLoginStore } from '@/stores/AuthStore'
+  import { useToastController } from 'bootstrap-vue-next'
 
   const loginStore = useLoginStore()
+  const toast = useToastController()
 
   const fields = [
     { key: 'title', label: 'Quiz Title', sortable: true },
@@ -124,12 +129,13 @@ onMounted(async () => {
     }
   }
   
-  // accept quiz 
   async function acceptQuiz(quiz) {
     try {
         await apiFetch(`/students/${loginStore.get_user_data().id}/accept_quiz?q_id=${quiz.id}`)
-    } catch(e) {
-      console.log(e);
+        toast.show?.({ props: { title: 'Accept Quiz', variant: 'success', body: `"${quiz.title}" is Accepted.` } })
+      } catch(e) {
+        console.log(e);
+      toast.show?.({ props: { title: 'Accept Quiz', value: true, variant: 'danger', body: `"Failed to Accepted.` } })
     }
   }
   // end 

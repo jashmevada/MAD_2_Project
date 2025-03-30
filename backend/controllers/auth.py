@@ -1,5 +1,5 @@
 from flask import Blueprint, current_app, jsonify
-from flask_jwt_extended import jwt_required, create_access_token, get_jwt_identity
+from flask_jwt_extended import  create_access_token
 from flask_pydantic import validate
 
 from backend.models.model import Instructor, Student, Subject, User

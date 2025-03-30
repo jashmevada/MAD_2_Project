@@ -1,6 +1,6 @@
 <template>
   <div class="container-fluid p-4">
-    <h1 class="mb-4">Quiz Admin Dashboard</h1>
+    <!-- <h1 class="mb-4">Quiz Admin Dashboard</h1> -->
 
     <!-- Summary Cards -->
 

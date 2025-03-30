@@ -41,13 +41,9 @@ class SingleInstructorAPI(MethodView):
     
 @jwt_required()
 def update_status(id: int):
-    approval: bool | None = request.args.get("approval", type=bool)
-    
     instructor: Instructor = Instructor.query.get_or_404(id)
-    
-    if approval:
-        instructor.approval = True if approval == "true" else False  
-        return do_commit("Success Update", "Failed to update")
+    instructor.approval = True  
+    return do_commit("Success Update", "Failed to update")
 
     return {"msg": "Error"}, 400 
     

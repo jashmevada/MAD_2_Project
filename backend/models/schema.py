@@ -69,7 +69,6 @@ class QuizCreateModel(BaseModel):
     time_duration: float
     created_by: int
     # time_duration: str = Field(..., pattern=r'^\d{2}:\d{2}$')
-    remarks: Optional[str] = None
     questions: List[QuestionModel]
 
 class QuizQueryModel(BaseModel):

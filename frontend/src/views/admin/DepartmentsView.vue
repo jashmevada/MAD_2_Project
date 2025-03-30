@@ -45,7 +45,7 @@
     </BModal>
 
     <BModal v-model="showDeleteModal" title="Confirm Delete" ok-variant="danger" ok-title="Delete" @ok="deleteDepartment">
-      <p class="my-4">Are you sure you want to delete the Department "{{ selectedDepartment?.name }}"?</p>
+      <p class="my-4">Are you sure you want to delete the Department "{{ selectedDepartment?.title }}"?</p>
       <p class="text-danger">This action cannot be undone.</p>
     </BModal>
   </div>
