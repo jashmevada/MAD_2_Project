@@ -23,3 +23,13 @@
 - Bootstrap Vue Next 
 - ofetch
 - Chart.js
+
+## How to Run Code 
+
+### Step 1
+
+- Run Backend:
+`cd backend; flask run`
+
+- Run Frontend: 
+`cd frontend; pnpm run dev`
