@@ -52,6 +52,16 @@ const router = createRouter({
           component: () => import("@/views/admin/StudentsView.vue")
         },
         {
+          path: 'students/:id',
+          name: "Students Quiz Scores",
+          component: () => import("@/views/admin/StudentsQuizView.vue")
+        },
+        {
+          path: 'students/:id/score',
+          name: "Student Score",
+          component: () => import("@/views/student/QuizScoreView.vue")
+        },
+        {
           path: 'subjects',
           name: 'Subjects Management',
           component: () => import("@/views/admin/SubjectsView.vue"),
@@ -59,6 +69,7 @@ const router = createRouter({
             { path: 'add', component: () => import("@/views/admin/SubjectsAddView.vue") }
           ]
         },
+        
         {
           path: 'quiz',
           name: 'Quiz Management',
@@ -121,7 +132,7 @@ const router = createRouter({
         {
           name: 'Quiz Edit',
           path: 'quiz/:id/edit',
-          component: () => import("@/views/QuizCreateView.vue")
+          component: () => import("@/views/QuizEditView.vue")
         },
         {
           path: 'subjects/:id',
@@ -147,11 +158,6 @@ const router = createRouter({
           path: 'dashboard',
           component: () => import("@/views/student/DashboardView.vue")
         },
-        // {
-        //   name: 'Quiz',
-        //   path: 'quiz',
-        //   component: () => import("@/views/student/QuizView.vue")
-        // },
         {
           name: "Find Quiz",
           path: 'quiz/find',
@@ -160,13 +166,20 @@ const router = createRouter({
         {
           name: 'Your Accept Quizzes',
           path: 'quiz/my-quizzes',
-          component: () => import("@/views/student/QuizView.vue")
+          component: () => import("@/views/student/QuizView.vue"),
         },
         {
           name: "Quiz Window",
           path: 'quiz/:id/attempt',
           component: () => import("@/views/student/QuizWindow.vue") // QuizAttemptView
+        },
+        {
+          name: "Quiz Scores",
+          path: 'quiz/:id/score',
+          component: () => import("@/views/student/QuizScoreView.vue"),
+         
         }
+
       ]
     },
   ],

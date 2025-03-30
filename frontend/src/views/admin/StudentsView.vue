@@ -8,7 +8,7 @@
 
     <BCard>
       <BTable  hover responsive :items="filteredStudents" :fields="fields" :busy="isLoading" show-empty
-        empty-text="No subjects found">
+        empty-text="No Student found" @row-clicked="navigateToStudentDetail">
 
         <template #table-busy>
           <div class="text-center my-2">
@@ -57,6 +57,7 @@
 import { ref, reactive, computed, onMounted } from 'vue'
 import { useRouter } from 'vue-router'
 import { apiFetch } from '@/apiFetch'
+import router from '@/router'
 
 const students = ref([])
 const isLoading = ref(true)
@@ -144,6 +145,10 @@ const formatDate = (dateString) => {
       return dateString
     }
   }
+
+function navigateToStudentDetail(item) {
+  router.push(`/admin/students/${item.id}`)
+}
 </script>
 
 <style scoped>

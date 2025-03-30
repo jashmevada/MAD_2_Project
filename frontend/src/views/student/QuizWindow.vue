@@ -336,7 +336,6 @@ const finishQuiz = async () => {
   try {
     loading.value = true;
     
-    // Clear the local timer
     if (localTimerInterval) {
       clearInterval(localTimerInterval);
     }
@@ -365,6 +364,7 @@ const finishQuiz = async () => {
         selected_option: optionIndex !== null ? optionIndex.toString() : null
       })),
       user_id: 1,
+      quiz_id: route.params.id, 
       timer_session_id: timerSessionId.value} 
     });
     
@@ -382,10 +382,17 @@ const formatDate = (dateString) => {
 };
 
 const goToQuizPortal = () => {
-  router.push('/student/quizzes');
+  if (localTimerInterval) {
+      clearInterval(localTimerInterval);
+    }
+  
+  if (eventSource.value) {
+      eventSource.value.close();
+      eventSource.value = null;
+  }
+  router.push('/student/quiz/my-quizzes');
 };
 
-// Lifecycle hooks
 onMounted(() => {
   loadQuiz();
 });

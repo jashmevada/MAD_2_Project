@@ -8,9 +8,11 @@ from flask_migrate import Migrate
 
 from .utils.init_db import create_initial_data
 from .utils.common import cache
-from .controllers import subject, auth, instructors, chapters, students, quiz,departments
+from .controllers import subject, auth, instructors, chapters, students, quiz,departments, analytics
 from .config import LocalDevelopmentConfig
-from .utils.db import db,celery
+from .utils.db import db
+from .utils.celery_init import celery_init_app
+from .utils.mail import mail 
 
 dictConfig(
     {
@@ -58,30 +60,11 @@ with app.app_context():
 
 JWTManager(app)
 cache.init_app(app)
-# socketio.init_app(app)
+mail.init_app(app)
 
-celery.conf.update(
-    broker_url= app.config["CELERY_BROKER_URL"],
-    result_backend=app.config['CELERY_RESULT_BACKEND'],
-    task_serializer="json",
-    result_serializer="json",
-    accept_content=["json"],
-    timezone="Asia/Kolkata",
-    enable_utc=True,
-    worker_hijack_root_logger=False,
-    broker_connection_retry_on_startup=True,
-    worker_log_format="[%(asctime)s] [%(levelname)s] [%(task_name)s] [%(filename)s:%(lineno)d] - %(message)s",
-    task_annotations={"tasks.add": {"rate_limit": "10/s"}},
-)
+celery = celery_init_app(app)
+celery.autodiscover_tasks()
 
-class ContextTask(celery.Task):
-    def __call__(self, *args, **kwargs):
-        with app.app_context():
-            return self.run(*args, **kwargs)
-
-celery.Task = ContextTask
-
-# app.extensions["celery"] = celery
 
 app.register_blueprint(auth.bp)
 app.register_blueprint(instructors.bp)
@@ -90,5 +73,7 @@ app.register_blueprint(chapters.bp)
 app.register_blueprint(students.bp)
 app.register_blueprint(quiz.bp)
 app.register_blueprint(departments.bp)
+app.register_blueprint(analytics.bp)
+
 if __name__ == "__main__":
     app.run(debug=True)

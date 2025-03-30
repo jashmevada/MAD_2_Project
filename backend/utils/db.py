@@ -19,7 +19,7 @@ class Base(DeclarativeBase):
 
 db = SQLAlchemy(model_class=Base)
 
-celery = Celery("Application Tasks")
+# celery = Celery("Application Tasks")
 
 redis_client = redis.Redis(
     host='localhost',

@@ -3,7 +3,7 @@ from typing import List, Optional, Set
 from sqlalchemy import Column, ForeignKey, DateTime, Date, Integer, String, Table, update
 from sqlalchemy.orm import relationship, Mapped, mapped_column
 from sqlalchemy.ext.hybrid import hybrid_property
-from sqlalchemy.ext.mutable import MutableDict
+from sqlalchemy.ext.mutable import MutableDict, MutableList
 from sqlalchemy.dialects.sqlite import JSON
 
 from ..utils.db import db
@@ -211,7 +211,7 @@ class Quiz(db.Model):
     chapter: Mapped["Chapter"] = relationship(back_populates="quizzes")
     # subject: Mapped["Subject"] = relationship(back_populates="quizzes")
     questions: Mapped[Set["Question"]] = relationship("Question", back_populates="quiz", cascade="all, delete-orphan", passive_deletes=True)
-    scores: Mapped["Score"] = relationship("Score", back_populates="quiz", cascade="all, delete-orphan", passive_deletes=True)
+    scores: Mapped[List["Score"]] = relationship("Score", back_populates="quiz", cascade="all, delete-orphan", passive_deletes=True)
     # assigned_students: Mapped["Student"] = relationship( secondary="quiz_assignment", back_populates="assigned_quizzes")
     # students: Mapped['Student'] = relationship(secondary=StudentQuiz, back_populates="quizzes")
     # created_by_user: Mapped["User"] = relationship("User")
@@ -291,8 +291,42 @@ class Score(db.Model):
     quiz_id: Mapped[int] = mapped_column(ForeignKey("quizzes.id"))
     user_id: Mapped[int] = mapped_column(ForeignKey("student.id"))
     time_stamp_of_attempt: Mapped[datetime] = mapped_column(default=datetime.now())
-    total_scored: Mapped[float] # convert into property compute by quiz and selected_options to get total scored.
-    selected_options: Mapped[dict] = mapped_column(MutableDict.as_mutable(JSON))
+    # total_scored: Mapped[float] # convert into property compute by quiz and selected_options to get total scored.
+    selected_options: Mapped[list[dict]] = mapped_column(MutableList.as_mutable(JSON))
 
     quiz: Mapped["Quiz"] = relationship(back_populates="scores")
     user: Mapped[Student] = relationship(back_populates="scores")
+
+    @hybrid_property
+    def total_scored(self) -> int: 
+        """Count of correct Answer."""
+        scores = 0 
+        
+        for i in self.selected_options:
+            question_id = i.get('question_id')
+            selected_option = i.get('selected_option') 
+            
+            ques: Question = Question.query.get(question_id)
+            
+            if int(selected_option) == ques.correct_option:
+                scores += 1 
+        
+        return scores
+    
+    @hybrid_property
+    def marks(self):
+        """Marks are out of 100 or %"""
+        return (self.total_scored / len(self.selected_options)) * 100
+        
+    def to_dict(self):
+        return {
+            "id": self.id,
+            "selected_options": self.selected_options,
+            "total_scored": self.total_scored,
+            "date": self.time_stamp_of_attempt,
+            "marks": self.marks,
+
+        }
+        
+        
+        

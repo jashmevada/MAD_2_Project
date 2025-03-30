@@ -41,10 +41,7 @@
 
           <template #cell(actions)="data">
           <div class="d-flex gap-2">
-            <BButton size="sm" variant="outline-info" @click="attendQuiz(data.item.id)">
-              Attend 
-            </BButton>
-            <BButton size="sm" variant="outline-primary" :to="`/student/quiz/${data.item.id}/score`">
+            <BButton size="sm" variant="outline-primary" :to="`/admin/students/${data.item.id}/score`">
               Scores 
             </BButton>
           </div>
@@ -59,9 +56,11 @@
   import { apiFetch } from '@/apiFetch'
   import { useLoginStore } from '@/stores/AuthStore'
 import router from '@/router'
+import { useRoute } from 'vue-router'
 
   const loginStore = useLoginStore()
-  
+  const route = useRoute()
+
   const fields = [
     { key: 'title', label: 'Quiz Title', sortable: true },
     { key: 'subject', label: 'Subject', sortable: true },
@@ -75,18 +74,14 @@ import router from '@/router'
   const departmentOptions = shallowRef([])
 
 onMounted(async () => {
-    quizzes.value = await apiFetch(`/students/${loginStore.get_user_data().id}/quizzes`)
+    quizzes.value = await apiFetch(`/students/${route.params.id}/quizzes`)
     departmentOptions.value = await apiFetch("/departments")
 })
   
   const searchQuery = ref('')
   const subjectFilter = ref('')
   const departmentFilter = ref('')
-  
-  const showDeleteModal = ref(false)
-  const quizToDelete = ref(null)
-  
-  
+
   const subjectOptions = computed(() => {
     const subjects = new Set(quizzes.value.map(quiz => quiz.subject))
     return Array.from(subjects).map(subject => ({ value: subject, text: subject }))
@@ -126,14 +121,6 @@ onMounted(async () => {
       return dateString
     }
   }
-  
-  async function attendQuiz(quiz_id) {
-    try {
-      router.push(`/student/quiz/${quiz_id}/attempt`)
-        // await apiFetch(`/students/${loginStore.get_user_data().id}/accept_quiz?q_id=${quiz.id}`)
-    } catch(e) {
-      console.log(e);
-    }
-  }
+
   </script>
   

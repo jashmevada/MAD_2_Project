@@ -6,9 +6,9 @@ from flask_jwt_extended import jwt_required, create_access_token, get_jwt_identi
 from flask_pydantic import validate
 from flask.views import MethodView
 
-from ..models.model import Instructor, Quiz, Question, TimerSession, User
-from backend.models.schema import QuizCreateModel, QuizQueryModel
-from backend.utils.common import add_db, cache
+from ..models.model import Instructor, Quiz, Question, Score, TimerSession, User
+from backend.models.schema import QuizAttempt, QuizCreateModel, QuizQueryModel
+from backend.utils.common import add_db, cache, do_commit
 from ..utils.db import db, redis_client
 
 bp = Blueprint("quiz", __name__, url_prefix="/api")
@@ -346,13 +346,14 @@ def save_answer(quiz_id):
         current_app.logger.error(f"Error saving answer: {str(e)}")
         return jsonify({'error': str(e)}), 401
 
+@validate()
 @jwt_required()
-def submit_quiz(quiz_id):
+def submit_quiz(quiz_id, body: QuizAttempt):
     """Submit all answers and end the quiz."""
     try:
-        # user_id = 1
+        
         user_id = get_jwt_identity()
-        data = request.json
+        # data = request.json
         
         # Get the timer session
         timer_session = TimerSession.query.filter_by(
@@ -370,15 +371,20 @@ def submit_quiz(quiz_id):
             redis_client.delete(f"quiz:timer:{timer_session.id}")
         
         # Process the submitted answers
-        answers = data.get('answers', [])
+        # answers = body.get('answers', [])
         
-        # Save answers to database
-        for answer in answers:
-            question_id = answer.get('question_id')
-            selected_option = answer.get('selected_option')
-            
+        # # Save answers to database
+        # for answer in answers:
+        #     question_id = answer.get('question_id')
+        #     selected_option = answer.get('selected_option')
+        quiz: Quiz = Quiz.query.get_or_404(quiz_id)
+        quiz.no_student_attempt += 1
+        
+        score = Score(quiz_id=quiz_id, user_id=user_id, selected_options=body.answers)
             # Save to your QuizAnswer model (implementation depends on your data model)
             # ...
+        current_app.logger.info(add_db([score]))
+        # current_app.logger.info(do_commit())
             
         # Clear Redis answers cache
         redis_client.delete(f"quiz:answers:{quiz_id}:{user_id}")

@@ -14,3 +14,7 @@ class LocalDevelopmentConfig(object):
     JWT_REFRESH_TOKEN_EXPIRES = timedelta(days=1)
     CACHE_TYPE = "RedisCache"
     CACHE_DEFAULT_TIMEOUT = 300
+    
+    MAIL_HOST = "localhost"
+    MAIL_PORT = 1025
+    # MAIL_USERNAME = "jashmevada1610@gmail.com"

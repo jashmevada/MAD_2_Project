@@ -83,7 +83,7 @@
     </BForm>
   </BCard>
 
-  {{ quiz }}
+  <!-- {{ quiz }} -->
 </template>
 
 <script setup>
@@ -150,8 +150,8 @@ const updateChapterList = async () => {
 const initializeQuestions = (count) => {
   quiz.value.questions = []
 
-  quiz.value.questions.push(...initQuestionList.value.map((e) => {e.options = Object.values(e.options); return e}))
-  
+  quiz.value.questions.push(...initQuestionList.value.map((e) => { e.options = Object.values(e.options); return e }))
+
   for (let i = 0; i < count; i++) {
     quiz.value.questions.push({
       question_statement: '',
@@ -159,7 +159,7 @@ const initializeQuestions = (count) => {
       correct_option: 0
     })
   }
-  
+
   // console.log(quiz.value.questions);
 }
 

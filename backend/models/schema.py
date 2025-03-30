@@ -96,6 +96,7 @@ class TimerStartSchema(BaseModel):
 #     user_id: int
 #     total_scored: float
 
-# class QuizAttempt(BaseModel):
-#     quiz_id: int
-#     answers: List[int]
+class QuizAttempt(BaseModel):
+    quiz_id: int
+    timer_session_id: str
+    answers: List[dict] 
