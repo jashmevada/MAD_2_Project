@@ -2,7 +2,6 @@ from flask_socketio import SocketIO
 from sqlalchemy.orm import DeclarativeBase
 from sqlalchemy import MetaData
 from flask_sqlalchemy import SQLAlchemy
-from celery import Celery
 import redis
 
 naming_convention = {
@@ -18,8 +17,6 @@ class Base(DeclarativeBase):
 
 
 db = SQLAlchemy(model_class=Base)
-
-# celery = Celery("Application Tasks")
 
 redis_client = redis.Redis(
     host='localhost',

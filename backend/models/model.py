@@ -38,13 +38,6 @@ class Admin(User):
         "polymorphic_identity": "admin",
     }
 
-# Association table for Student-Quiz 
-# class StudentQuiz(db.Model):
-#     __tablename__ = "student_quiz"
-    
-#     student_id: Mapped[int] = mapped_column(ForeignKey("student.id"), primary_key=True)
-#     quiz_id: Mapped[int] = mapped_column(ForeignKey("quizzes.id"), primary_key=True)
-#     score_id: Mapped[int] = mapped_column(ForeignKey("quizzes.id"), primary_key=True)
 # Association table for Student-Quiz
 class QuizAssignment(db.Model):
     __tablename__ = "quiz_assignment"
@@ -69,11 +62,8 @@ class Student(User):
     full_name: Mapped[str]
     qualification: Mapped[str]
     dob: Mapped[date]
-    # scores: Mapped[int] = mapped_column(ForeignKey("scores.id"))
     
     scores: Mapped["Score"] = relationship(back_populates="user")
-    # quizzes: Mapped[List['Quiz']] = relationship(secondary="student_quiz", back_populates="students")
-    # assigned_quizzes: Mapped["Quiz"] = relationship(secondary="quiz_assignment", back_populates="assigned_students")
     quiz_assignments: Mapped[Set['QuizAssignment']] = relationship(back_populates="student")
 
     
@@ -96,7 +86,6 @@ class Student(User):
             "username": self.username,
             "qualification": self.qualification,
             "dob": self.dob,
-            # "scores": [score.to_dict() for score in self.scores]
         }
 
 
@@ -161,10 +150,8 @@ class Subject(db.Model):
     department: Mapped[int] = mapped_column(ForeignKey("departments.id"))
     
     chapters: Mapped[List["Chapter"]] = relationship(back_populates="subject", cascade="all, delete")
-    # quizzes: Mapped[List['Quiz']] = relationship(back_populates="subject", cascade="all, delete")
-    # instructors: Mapped[Set["Instructor"]] = relationship(secondary="instructor_department", back_populates="subjects")
     Sdepartment: Mapped['Department'] = relationship(back_populates="subjects")
-
+    
     @hybrid_property
     def instructors_list(self):
         return [assoc.instructor for assoc in self.instructors]
@@ -174,7 +161,7 @@ class Subject(db.Model):
         return len(self.chapters)
     
     def to_dict(self):
-        return {"id": self.id, "name": self.name, "description": self.description, 'department': self.department}
+        return {"id": self.id, "name": self.name, "description": self.description, 'department': self.Sdepartment.title, "department_id": self.department}
 
 
 class Chapter(db.Model):
@@ -197,26 +184,21 @@ class Chapter(db.Model):
 
 class Quiz(db.Model):
     __tablename__ = "quizzes"
-    id: Mapped[int] = mapped_column(primary_key=True)
+    id: Mapped[int] = mapped_column (primary_key=True)
     title: Mapped[str]
     chapter_id: Mapped[int] = mapped_column(ForeignKey("chapters.id"))
-    # subject_id: Mapped[int] = mapped_column(ForeignKey('subjects.id'))
     date_of_quiz: Mapped[datetime]
     time_duration: Mapped[str] = mapped_column(String(5))  # HH:MM format
-    remarks: Mapped[str]
+    # remarks: Mapped[str]
     created_at: Mapped[datetime] = mapped_column(default=datetime.now())
     created_by: Mapped[int] = mapped_column(ForeignKey("users.id"))
     no_student_attempt: Mapped[int] = mapped_column(default=0)
     
     chapter: Mapped["Chapter"] = relationship(back_populates="quizzes")
-    # subject: Mapped["Subject"] = relationship(back_populates="quizzes")
     questions: Mapped[Set["Question"]] = relationship("Question", back_populates="quiz", cascade="all, delete-orphan", passive_deletes=True)
     scores: Mapped[List["Score"]] = relationship("Score", back_populates="quiz", cascade="all, delete-orphan", passive_deletes=True)
-    # assigned_students: Mapped["Student"] = relationship( secondary="quiz_assignment", back_populates="assigned_quizzes")
-    # students: Mapped['Student'] = relationship(secondary=StudentQuiz, back_populates="quizzes")
-    # created_by_user: Mapped["User"] = relationship("User")
     student_assignments: Mapped[Set['QuizAssignment']] = relationship(back_populates="quiz", cascade="all, delete-orphan")
-
+    
     @hybrid_property
     def no_of_questions(self) -> int:
         return len(self.questions)
@@ -226,13 +208,12 @@ class Quiz(db.Model):
             "id": self.id,
             "title": self.title,
             "chapter_id": self.chapter_id,
-            # "subject": self.chapter.subject.name,
             "subject_id": self.chapter.subject.id,
             "date_of_quiz": self.date_of_quiz.strftime("%Y-%m-%d %H:%M:%S"), # .strftime("%Y-%m-%d %H:%M:%S")
             "time_duration": self.time_duration,
-            "remarks": self.remarks,
+            # "remarks": self.remarks,
             "no_of_questions": self.no_of_questions,
-            # "question": [question.to_dict() for question in self.questions],
+            "subject": self.chapter.subject.name,
         }
 
 class TimerSession(db.Model):

@@ -83,10 +83,6 @@ onMounted(async () => {
   const subjectFilter = ref('')
   const departmentFilter = ref('')
   
-  const showDeleteModal = ref(false)
-  const quizToDelete = ref(null)
-  
-  
   const subjectOptions = computed(() => {
     const subjects = new Set(quizzes.value.map(quiz => quiz.subject))
     return Array.from(subjects).map(subject => ({ value: subject, text: subject }))
@@ -107,7 +103,6 @@ onMounted(async () => {
         quiz.subject.toLowerCase().includes(query)
       )
     }
-  
     return result
   })
   
@@ -130,7 +125,6 @@ onMounted(async () => {
   async function attendQuiz(quiz_id) {
     try {
       router.push(`/student/quiz/${quiz_id}/attempt`)
-        // await apiFetch(`/students/${loginStore.get_user_data().id}/accept_quiz?q_id=${quiz.id}`)
     } catch(e) {
       console.log(e);
     }

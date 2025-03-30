@@ -1,4 +1,4 @@
-from flask import Blueprint, current_app, request
+from flask import Blueprint, request
 from flask_jwt_extended import jwt_required
 from flask_pydantic import validate
 from flask.views import MethodView

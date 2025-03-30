@@ -2,7 +2,7 @@ from flask import Blueprint, request
 from flask.views import MethodView
 from flask_jwt_extended import jwt_required
 
-from backend.utils.common import add_db, do_commit
+from backend.utils.common import do_commit
 
 from ..models.model import Instructor
 

@@ -7,7 +7,7 @@
     </div>
 
     <BCard>
-      <BTable  hover responsive :items="filteredStudents" :fields="fields" :busy="isLoading" show-empty
+      <BTable hover responsive :items="filteredStudents" :fields="fields" :busy="isLoading" show-empty
         empty-text="No Student found" @row-clicked="navigateToStudentDetail">
 
         <template #table-busy>
@@ -17,10 +17,10 @@
           </div>
         </template>
 
-        <template #cell(full_name)="{item}">
+        <template #cell(full_name)="{ item }">
           <div class="user-info">
-          <div class="user-name"><strong>{{ item.full_name }}</strong></div>
-          <div class="user-username text-muted">@{{ item.username }}</div>
+            <div class="user-name"><strong>{{ item.full_name }}</strong></div>
+            <div class="user-username text-muted">@{{ item.username }}</div>
           </div>
         </template>
 
@@ -35,8 +35,8 @@
           </div>
         </template>
 
-        
-        <template #cell(dob)="{item}">
+
+        <template #cell(dob)="{ item }">
           {{ formatDate(item.dob) }}
         </template>
 
@@ -46,9 +46,11 @@
   </div>
 
   <BModal v-model="showDeleteModal" title="Confirm Delete" ok-variant="danger" ok-title="Delete" @ok="deleteSubject">
-      <p class="my-4">Are you sure you want to delete the Student "{{ selectedStudent?.full_name }}"?</p>
-      <p class="text-danger">This action cannot be undone.</p>
+    <p class="my-4">Are you sure you want to delete the Student "{{ selectedStudent?.full_name }}"?</p>
+    <p class="text-danger">This action cannot be undone.</p>
   </BModal>
+
+  <BToastOrchestrator />
 
 </template>
 
@@ -58,16 +60,19 @@ import { ref, reactive, computed, onMounted } from 'vue'
 import { useRouter } from 'vue-router'
 import { apiFetch } from '@/apiFetch'
 import router from '@/router'
+import { useToastController } from 'bootstrap-vue-next'
 
 const students = ref([])
 const isLoading = ref(true)
 
 const fields = [
   { key: 'full_name', label: 'Name', sortable: true },
-  {key: 'qualification', label: 'Qulification'},
-  {key: 'dob', label: 'DOB'},
+  { key: 'qualification', label: 'Qulification' },
+  { key: 'dob', label: 'DOB' },
   { key: 'actions', label: 'Actions' }
 ]
+
+const toast = useToastController()
 
 const fetchStudents = async () => {
   isLoading.value = true
@@ -98,7 +103,7 @@ const filteredStudents = computed(() => {
   if (searchQuery.value) {
     const query = searchQuery.value.toLowerCase()
     result = result.filter(quiz =>
-      quiz.full_name.toLowerCase().includes(query) 
+      quiz.full_name.toLowerCase().includes(query)
       // quiz.subject.toLowerCase().includes(query)
     )
   }
@@ -123,33 +128,32 @@ const deleteSubject = async () => {
   try {
     await apiFetch(`/students/${selectedStudent.value.id}`, { method: 'DELETE' })
 
+    toast.show?.({props: {title: 'Delete Subject', value: true, variant: 'success', body: `Subject "${selectedStudent.value.name}" deleted successfully`}})
+    
     students.value = students.value.filter(s => s.id !== selectedStudent.value.id)
-
-    console.log(`Subject "${selectedStudent.value.name}" deleted successfully`)
   } catch (error) {
     console.error('Error deleting subject:', error)
   }
 }
 
 const formatDate = (dateString) => {
-    try {
-      let t = new Date(dateString)
-      return t.toLocaleDateString('en-IN', {
-        day: '2-digit',
-        month: 'short',
-        year: 'numeric'
-      })
-    } catch (e) {
-      console.log("error");
-  
-      return dateString
-    }
+  try {
+    let t = new Date(dateString)
+    return t.toLocaleDateString('en-IN', {
+      day: '2-digit',
+      month: 'short',
+      year: 'numeric'
+    })
+  } catch (e) {
+    console.log("error");
+
+    return dateString
   }
+}
 
 function navigateToStudentDetail(item) {
   router.push(`/admin/students/${item.id}`)
 }
 </script>
 
-<style scoped>
-</style>
+<style scoped></style>

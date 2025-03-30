@@ -1,5 +1,4 @@
 from celery import Celery, Task
-from pprint import pprint
 
 def celery_init_app(app):
     class FlaskTask(Task):
@@ -8,11 +7,7 @@ def celery_init_app(app):
                 return self.run(*args, **kwargs)
 
     celery_app = Celery(app.name, task_cls=FlaskTask)
-    # celery_app.config_from_object('celery_config')
     celery_app.set_default()
-    
-    # celery_app.conf.result_backend="redis://localhost:6379/0"
-    # celery_app.conf.broker_url = "redis://localhost:6379/0"
     
     celery_app.conf.update( 
     broker_url= app.config["CELERY_BROKER_URL"],

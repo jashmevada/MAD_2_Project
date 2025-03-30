@@ -20,7 +20,6 @@
           :options="chapterList" text-field="name" value-field="id" required />
       </BFormGroup>
 
-      <!-- Date and Time -->
       <BRow>
         <BCol md="6">
           <BFormGroup id="quiz-date" label="Quiz Date:" label-for="input-date">
@@ -34,7 +33,6 @@
         </BCol>
       </BRow>
 
-      <!-- Duration and Question Count -->
       <BRow>
         <BCol md="6">
           <BFormGroup id="quiz-duration" label="Duration (minutes):" label-for="input-duration">
@@ -49,7 +47,6 @@
         </BCol>
       </BRow>
 
-      <!-- Questions Section -->
       <h3 class="mt-4">Questions</h3>
       <div v-for="(question, qIndex) in quiz.questions" :key="qIndex"
         class="question-container mb-4 p-3 border rounded">
@@ -58,7 +55,6 @@
             placeholder="Enter question" required />
         </BFormGroup>
 
-        <!-- Options -->
         <div v-for="(option, oIndex) in question.options" :key="`${qIndex}-${oIndex}`" class="d-flex mb-2">
           <BFormInput v-model="question.options[oIndex]" :placeholder="`Option ${oIndex + 1}`" class="me-2" required />
           <BFormRadio v-model="question.correct_option" :value="oIndex" :name="`correct-answer-${oIndex}-${qIndex}`">
@@ -83,14 +79,12 @@
     </BForm>
   </BCard>
 
-  <!-- {{ quiz }} -->
 </template>
 
 <script setup>
 import { apiFetch } from '@/apiFetch'
 import router from '@/router'
 import { useLoginStore } from '@/stores/AuthStore'
-// import { BFormSelect } from 'bootstrap-vue-next'
 import { ref, reactive, onMounted, shallowRef, watch } from 'vue'
 import { useRoute } from 'vue-router'
 
@@ -137,7 +131,7 @@ onMounted(async () => {
     questionCount.value = quiz.value.no_of_questions
     updateChapterList()
   }
-  // quiz.value.questions.push(...initQuestionList.value)
+
   initializeQuestions(0)
 })
 
@@ -160,7 +154,6 @@ const initializeQuestions = (count) => {
     })
   }
 
-  // console.log(quiz.value.questions);
 }
 
 const updateQuestionCount = () => {

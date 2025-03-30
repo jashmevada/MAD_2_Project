@@ -37,7 +37,7 @@ export const useLoginStore = defineStore('login', {
                 if (this.role === "student") {
                     router.push('/student/dashboard' || '/') // employee/task
                 } else if (this.role === 'instructor') {
-                    router.push("/instructor" || '/')
+                    router.push("/instructor/dashboard" || '/')
                 } else {
                     router.push('/admin/dashboard' || '/')
                 }

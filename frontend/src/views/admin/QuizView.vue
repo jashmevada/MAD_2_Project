@@ -1,23 +1,28 @@
 <template>
   <div class="container mt-5">
 
-    <div class="row mb-4">
-      <div class="col-md-6">
+    <BRow class="mb-4">
+      <BCol md="3">
         <BFormInput v-model="searchQuery" placeholder="Search quizzes..." type="search" class="mb-2" />
-      </div>
-      <div class="col-md-3">
-        <BFormSelect v-model="subjectFilter" :options="subjectOptions" class="mb-2">
+      </BCol>
+      <BCol md="3">
+        <BFormSelect v-model="subjectFilter" :options="subjectOptions" class="mb-2" text-field="name" value-field="id">
           <template #first>
             <option value="">All Subjects</option>
           </template>
         </BFormSelect>
-      </div>
-      <div class="col-md-3">
+      </BCol>
+
+      <BCol md="3">
         <BButton variant="success" @click='$router.push("quiz/create")'>
           <Icon icon="heroicons:plus-circle" class="me-2" width="24" />Quiz
         </BButton>
-      </div>  
-    </div>
+      </BCol>
+
+      <BCol md="3">
+        <BButton variant="primary" @click="exportCSV">Export as CSV</BButton>
+      </BCol>
+    </BRow>
 
     <BCard>
       <BTable :items="filteredQuizzes" :fields="fields" hover responsive empty-text="No subjects found">
@@ -81,7 +86,7 @@
 </template>
 
 <script setup>
-import { ref, computed, onMounted } from 'vue'
+import { ref, computed, onMounted, shallowRef } from 'vue'
 import { Icon } from '@iconify/vue'
 import { apiFetch } from '@/apiFetch'
 import router from '@/router'
@@ -107,15 +112,17 @@ const showDeleteModal = ref(false)
 const isEditing = ref(false)
 const currentQuiz = ref({})
 const quizToDelete = ref(null)
+const subjectOptions = shallowRef([])
 
 onMounted(async () => {
+  subjectOptions.value = await apiFetch("/subjects")
   quizzes.value = await apiFetch("/quizzes")
 })
 
-const subjectOptions = computed(() => {
-  const subjects = new Set(quizzes.value.map(quiz => quiz.subject))
-  return Array.from(subjects).map(subject => ({ value: subject, text: subject }))
-})
+// const subjectOptions = computed(() => {
+//   const subjects = new Set(quizzes.value.map(quiz => quiz.subject))
+//   return Array.from(subjects).map(subject => ({ value: subject, text: subject }))
+// })
 
 
 const filteredQuizzes = computed(() => {
@@ -123,7 +130,7 @@ const filteredQuizzes = computed(() => {
 
 
   if (subjectFilter.value) {
-    result = result.filter(quiz => quiz.subject === subjectFilter.value)
+    result = result.filter(quiz => quiz.subject_id === subjectFilter.value)
   }
 
 
@@ -198,4 +205,36 @@ const deleteQuiz = () => {
   }
   showDeleteModal.value = false
 }
+
+
+const exportCSV = async () => {
+  
+  try {
+    // Make request to backend API endpoint
+    const response = await apiFetch('/export-csv', {
+      method: 'POST',
+      query: {q: 'a_quiz'},
+      responseType: 'blob' // Important for file downloads
+    });
+    
+    // Create a URL for the blob
+    const url = URL.createObjectURL(response);
+    
+    // Create a temporary anchor element to trigger download
+    const link = document.createElement('a');
+    link.href = url;
+    link.download = `data-export-${new Date().toISOString().slice(0, 10)}.csv`;
+    document.body.appendChild(link);
+    link.click();
+    
+    // Clean up
+    document.body.removeChild(link);
+    URL.revokeObjectURL(url);
+    
+  } catch (error) {
+    console.error('Error exporting CSV:', error);
+    // You could add a notification system here to alert the user
+  } 
+};
+
 </script>

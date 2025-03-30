@@ -74,7 +74,7 @@ const toggleSidebar = () => {
 
 const items = [
   { title: 'Home', link: '/instructor/dashboard', icon: 'heroicons:home' },
-  { title: 'Chapters', link: '/instructor/chapters', icon: 'heroicons:user-group' },
+  { title: 'Your Subject', link: '/instructor/chapters', icon: 'heroicons:user-group' },
   { title: 'Quiz', link: '/instructor/quiz', icon: 'heroicons:clipboard' }
 ]
 

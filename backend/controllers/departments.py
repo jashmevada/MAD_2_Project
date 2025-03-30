@@ -1,11 +1,11 @@
-from flask import Blueprint, current_app, jsonify
-from flask_jwt_extended import jwt_required, create_access_token, get_jwt_identity
+from flask import Blueprint
+from flask_jwt_extended import jwt_required
 from flask_pydantic import validate
 from flask.views import MethodView
 
 from ..models.schema import DepartmentModel
-from ..utils.common import add_db, do_commit, cache
-from ..models.model import Department, Subject
+from ..utils.common import add_db, do_commit
+from ..models.model import Department
 from ..utils.db import db 
 
 bp = Blueprint("departments", __name__, url_prefix="/api")  

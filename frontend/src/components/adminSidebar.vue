@@ -156,9 +156,6 @@ const items = [
     icon: 'heroicons:clipboard',
     children: [
       { title: 'Quizzes', link: '/admin/quiz', icon: 'heroicons:magnifying-glass' },
-      { title: 'My Quizzes', link: '#', icon: 'heroicons:document-text' },
-      // { title: 'Create Quiz', link: 'quiz/create', icon: 'heroicons:plus-circle' },
-      { title: 'Quiz History', link: '#', icon: 'heroicons:clock' }
     ]
   },
 ]

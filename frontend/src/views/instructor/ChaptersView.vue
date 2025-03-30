@@ -25,7 +25,7 @@
             </BButton>
             <BButton size="sm" variant="outline-danger" @click="confirmDelete(item)">
               <!-- <i class="bi bi-trash"></i> -->
-               Delete
+              Delete
             </BButton>
           </div>
         </template>
@@ -64,7 +64,7 @@ const router = useRouter()
 const fields = [
   { key: 'name', label: 'Subject Name', sortable: true },
   { key: 'department', label: 'Department', sortable: true },
-  {key:'description' , label:'Description', sortable:true},
+  { key: 'description', label: 'Description', sortable: true },
   { key: 'actions', label: 'Actions' }
 ]
 
@@ -177,7 +177,7 @@ const handleSubmit = async (event) => {
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify(form)
       })
-      
+
       const newSubject = {
         ...form,
         id: Math.max(0, ...subjects.value.map(s => s.id)) + 1
@@ -200,7 +200,7 @@ const resetForm = () => {
 }
 
 onMounted(async () => {
-  await fetchSubjects() 
+  await fetchSubjects()
 })
 
 const navigateToSubjectDetail = (item) => {

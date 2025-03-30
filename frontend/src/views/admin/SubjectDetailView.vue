@@ -2,12 +2,13 @@
 import { apiFetch } from '@/apiFetch';
 import { ref, reactive, computed, onMounted } from 'vue';
 import { useRoute, useRouter } from 'vue-router';
+import { useToastController } from 'bootstrap-vue-next'
 
-// Get route and router
 const route = useRoute();
 const router = useRouter();
+const toast = useToastController()
 
-// Subject data
+
 const subject = ref({});
 const chapters = ref([]);
 const loadingChapters = ref(true);
@@ -24,33 +25,29 @@ const chapterForm = reactive({
   description: ''
 });
 
-// Chapter fields
+
 const chapterFields = [
-  // { key: 'order', label: '#', sortable: true },
   { key: 'name', label: 'Title', sortable: true },
   { key: 'description', label: 'Description' },
   { key: 'actions', label: 'Actions' }
 ];
 
-// Form validation
+
 const chapterValidation = computed(() => {
   return {
     title: chapterForm.name.trim() !== ''
   };
 });
 
-// Fetch subject and its chapters
+
 const fetchSubjectDetails = async () => {
   const subjectId = route.params.id;
 
   try {
-    // Fetch subject details
+
     const subjectData = await apiFetch(`/subjects/${subjectId}`);
     subject.value = await subjectData
 
-    // Simulate API response
-
-    // Fetch chapters
     loadingChapters.value = true;
     const chaptersData = await apiFetch(`/subjects/${subjectId}/chapters`);
     chapters.value = await chaptersData
@@ -73,7 +70,7 @@ const editChapter = (chapter) => {
   isEditingChapter.value = true;
   selectedChapter.value = chapter;
   console.log(chapter);
-  
+
   // Populate form with chapter data
   Object.keys(chapterForm).forEach(key => {
     if (key in chapter) {
@@ -100,8 +97,10 @@ const deleteChapter = async () => {
     chapters.value = chapters.value.filter(c => c.id !== selectedChapter.value.id);
 
     console.log(`Chapter "${selectedChapter.value.title}" deleted successfully`);
+    toast.show?.({ props: { title: 'Delete Chapter', value: true, variant: 'success', body: `Chapter "${chapterForm.title}" added successfully.` } })
   } catch (error) {
     console.error('Error deleting chapter:', error);
+    toast.show?.({ props: { title: 'Delete Chapter', value: true, variant: 'danger', body: `Chapter "${chapterForm.title}" Not Delete.` } })
   }
 };
 
@@ -114,7 +113,7 @@ const handleChapterSubmit = async (event) => {
 
   try {
     if (isEditingChapter.value) {
-      // Update existing chapter
+
       await apiFetch(`/chapters/${chapterForm.id}`, {
         method: 'PUT',
         headers: { 'Content-Type': 'application/json' },
@@ -128,16 +127,16 @@ const handleChapterSubmit = async (event) => {
       }
 
       console.log(`Chapter "${chapterForm.title}" updated successfully`);
+      toast.show?.({ props: { title: 'Edit Chapter', value: true, variant: 'success', body: `Chapter "${chapterForm.title}" edit successfully.` } })
+
     } else {
-      // Add new chapter
+
       const response = await apiFetch(`/subjects/${subject.value.id}/chapters`, {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify(chapterForm)
       });
-      // const newChapter = await response.json();
 
-      // Simulate API response
       const newChapter = {
         ...chapterForm,
         id: Math.max(0, ...chapters.value.map(c => c.id)) + 1
@@ -146,10 +145,12 @@ const handleChapterSubmit = async (event) => {
       // Update local state
       chapters.value.push(newChapter);
 
-      console.log(`Chapter "${chapterForm.title}" added successfully`);
+      toast.show?.({ props: { title: 'New Chapter', value: true, variant: 'success', body: `Chapter "${chapterForm.title}" added successfully.` } })
+
     }
   } catch (error) {
     console.error('Error saving chapter:', error);
+    toast.show?.({ props: { title: 'Chapter', value: true, variant: 'danger', body: `Failed to Update` } })
     event.preventDefault();
   }
 };
@@ -172,7 +173,7 @@ onMounted(() => {
 <template>
   <div class="subject-detail-container p-4">
     <BCard no-body>
-      <!-- Subject Header -->
+
       <BCardHeader class="d-flex justify-content-between align-items-center">
         <h3>{{ subject.name }}</h3>
         <BButton variant="outline-secondary" @click="$router.go(-1)">
@@ -181,7 +182,7 @@ onMounted(() => {
       </BCardHeader>
 
       <BCardBody>
-        <!-- Subject Details -->
+
         <div class="mb-4">
           <h5 class="border-bottom pb-2">Subject Information</h5>
           <BRow>
@@ -198,7 +199,7 @@ onMounted(() => {
           </BRow>
         </div>
 
-        <!-- Chapters Section -->
+
         <div>
           <div class="d-flex justify-content-between align-items-center mb-3">
             <h5 class="border-bottom pb-2 mb-0">Chapters</h5>
@@ -224,7 +225,6 @@ onMounted(() => {
       </BCardBody>
     </BCard>
 
-    <!-- Add/Edit Chapter Modal -->
     <BModal v-model="showChapterModal" :title="isEditingChapter ? 'Edit Chapter' : 'Add New Chapter'"
       @hidden="resetChapterForm" @ok="handleChapterSubmit">
       <BForm @submit.prevent>
@@ -235,11 +235,6 @@ onMounted(() => {
             Chapter title is required
           </BFormInvalidFeedback>
         </BFormGroup>
-<!-- 
-        <BFormGroup label="Order" label-for="chapter-order">
-          <BFormInput id="chapter-order" v-model.number="chapterForm.order" type="number" min="1"
-            placeholder="Enter chapter order"></BFormInput>
-        </BFormGroup> -->
 
         <BFormGroup label="Description" label-for="chapter-description">
           <BFormTextarea id="chapter-description" v-model="chapterForm.description"
@@ -248,11 +243,12 @@ onMounted(() => {
       </BForm>
     </BModal>
 
-    <!-- Delete Chapter Confirmation Modal -->
     <BModal v-model="showDeleteChapterModal" title="Confirm Delete" ok-variant="danger" ok-title="Delete"
       @ok="deleteChapter">
       <p class="my-4">Are you sure you want to delete the chapter "{{ selectedChapter?.title }}"?</p>
       <p class="text-danger">This action cannot be undone.</p>
     </BModal>
   </div>
+
+  <BToastOrchestrator />
 </template>

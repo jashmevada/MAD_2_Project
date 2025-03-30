@@ -1,42 +1,41 @@
 <template>
   <div class="container-fluid p-4">
     <h1 class="mb-4">Quiz Admin Dashboard</h1>
-    
+
     <!-- Summary Cards -->
+
     <BRow class="mb-4">
       <BCol md="3">
         <BCard bg-variant="primary" text-variant="white" class="mb-2">
-          <BCardTitle>Total Quizzes</BCardTitle>
-          <h2 class="mb-0">{{ totalQuizzes }}</h2>
-          <small>{{ newQuizzesThisMonth }} new this month</small>
+          <BCardTitle>Total Students</BCardTitle>
+          <h2 class="mb-0">{{ api_data?.student_count }}</h2>
         </BCard>
       </BCol>
-      
+      <BCol md="3">
+        <BCard bg-variant="primary" text-variant="white" class="mb-2">
+          <BCardTitle>Total Instructors</BCardTitle>
+          <h2 class="mb-0">{{ api_data?.instructor_count }}</h2>
+       
+        </BCard>
+      </BCol>
+
+      <BCol md="3">
+        <BCard bg-variant="info" text-variant="white" class="mb-2">
+          <BCardTitle>Total Quizzes</BCardTitle>
+          <h2 class="mb-0">{{ totalQuizzes }}</h2>
+       
+        </BCard>
+      </BCol>
+
       <BCol md="3">
         <BCard bg-variant="success" text-variant="white" class="mb-2">
           <BCardTitle>Total Questions</BCardTitle>
           <h2 class="mb-0">{{ totalQuestions }}</h2>
-          <small>Avg {{ avgQuestionsPerQuiz }} per quiz</small>
-        </BCard>
-      </BCol>
-      
-      <BCol md="3">
-        <BCard bg-variant="info" text-variant="white" class="mb-2">
-          <BCardTitle>Active Users</BCardTitle>
-          <h2 class="mb-0">{{ activeUsers }}</h2>
-          <small>{{ percentageIncrease }}% increase</small>
-        </BCard>
-      </BCol>
-      
-      <BCol md="3">
-        <BCard bg-variant="warning" text-variant="white" class="mb-2">
-          <BCardTitle>Completion Rate</BCardTitle>
-          <h2 class="mb-0">{{ completionRate }}%</h2>
-          <small>Last 30 days</small>
+        
         </BCard>
       </BCol>
     </BRow>
-    
+
     <!-- Charts -->
     <BRow>
       <BCol md="6" class="mb-4">
@@ -46,15 +45,7 @@
           </div>
         </BCard>
       </BCol>
-      
-      <!-- <BCol md="6" class="mb-4">
-        <BCard title="Question Difficulty Distribution">
-          <div>
-            <canvas id="question-difficulty-chart"></canvas>
-          </div>
-        </BCard>
-      </BCol> -->
-      
+
       <BCol md="8" class="mb-4">
         <BCard title="Top Performing Quizzes">
           <div>
@@ -62,14 +53,14 @@
           </div>
         </BCard>
       </BCol>
-      
+<!-- 
       <BCol md="4" class="mb-4">
         <BCard title="User Engagement">
           <div>
             <canvas id="user-engagement-chart"></canvas>
           </div>
         </BCard>
-      </BCol>
+      </BCol> -->
     </BRow>
   </div>
 </template>
@@ -78,20 +69,26 @@
 import { ref, onMounted } from 'vue';
 import { BCard, BCardTitle, BRow, BCol } from 'bootstrap-vue-next';
 import Chart from 'chart.js/auto';
+import { apiFetch } from '@/apiFetch';
 
 // Summary card data
-const totalQuizzes = ref(156);
-const newQuizzesThisMonth = ref(23);
-const totalQuestions = ref(1842);
-const avgQuestionsPerQuiz = ref(12);
-const activeUsers = ref(3427);
-const percentageIncrease = ref(15);
-const completionRate = ref(78);
+const totalQuizzes = ref(0);
+// const newQuizzesThisMonth = ref(23);
+const totalQuestions = ref(0);
+
+const api_data = ref()
 
 // Initialize charts when component is mounted
-onMounted(() => {
+onMounted(async () => {
   // Quiz Completions Chart (Line chart)
+
+  api_data.value = await apiFetch("/admin/analytics")
+
+  totalQuizzes.value = api_data.value.total_quizzes
+  totalQuestions.value = api_data.value.total_questions
+
   const completionsCtx = document.getElementById('quiz-completions-chart');
+
   new Chart(completionsCtx, {
     type: 'line',
     data: {
@@ -114,7 +111,7 @@ onMounted(() => {
       }
     }
   });
-  
+
   // Question Difficulty Distribution (Pie chart)
   const difficultyCtx = document.getElementById('question-difficulty-chart');
   new Chart(difficultyCtx, {
@@ -135,7 +132,7 @@ onMounted(() => {
       responsive: true
     }
   });
-  
+
   // Top Performing Quizzes (Bar chart)
   const performanceCtx = document.getElementById('quiz-performance-chart');
   new Chart(performanceCtx, {
@@ -158,7 +155,7 @@ onMounted(() => {
       }
     }
   });
-  
+
   // User Engagement (Doughnut chart)
   const engagementCtx = document.getElementById('user-engagement-chart');
   new Chart(engagementCtx, {

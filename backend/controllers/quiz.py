@@ -2,13 +2,13 @@ from datetime import datetime, timedelta
 from time import sleep
 import uuid
 from flask import Blueprint, Response, current_app, json, jsonify, request, stream_with_context
-from flask_jwt_extended import jwt_required, create_access_token, get_jwt_identity
+from flask_jwt_extended import jwt_required, get_jwt_identity
 from flask_pydantic import validate
 from flask.views import MethodView
 
-from ..models.model import Instructor, Quiz, Question, Score, TimerSession, User
+from ..models.model import  Quiz, Question, Score, TimerSession, User
 from backend.models.schema import QuizAttempt, QuizCreateModel, QuizQueryModel
-from backend.utils.common import add_db, cache, do_commit
+from backend.utils.common import add_db, cache
 from ..utils.db import db, redis_client
 
 bp = Blueprint("quiz", __name__, url_prefix="/api")
@@ -21,9 +21,6 @@ class QuizAPI(MethodView):
     @cache.cached(timeout=30)
     @validate()
     def get(self, query: QuizQueryModel):
-        # user_id = get_jwt_identity()
-        # user: User = User.query.get(user_id)
-        
         if query.subject_id:
             return [i.to_dict() for i in Quiz.query.filter_by()]
         
@@ -43,8 +40,7 @@ class QuizAPI(MethodView):
 
         print(quiz)
         return add_db([quiz], "Sucess", "Failed")
-        # return {"message": "Quiz created successfully"}, 201
-
+  
 class SingleQuizAPI(MethodView):
     init_every_request = False 
     decorators = [jwt_required()]
@@ -55,27 +51,13 @@ class SingleQuizAPI(MethodView):
     @validate()
     def put(self, id: int, body: QuizCreateModel):
         quiz: Quiz = Quiz.query.get_or_404(id)
-        # # _quiz()
-        # quiz = _quiz(**body.model_dump(exclude=["questions", 'subject_id']))
-
+   
         for key, value in body.model_dump(exclude=["questions", 'subject_id']).items():
             setattr(quiz, key, value)
         
-        # what can happend 
-        # 1. change in old question
-        # 2. add / remove question 
-        # 
         quiz.questions.clear()
         
         for question in body.questions:
-            # if question.id: 
-            #     q: Question = Question.query.get_or_404(question.id)
-                
-            #     q.question_statement = question.question_statement
-            #     q.options = {i: option for i, option in enumerate(question.options)}
-            #     q.correct_option = question.correct_option
-            #     quiz.questions.add(q)
-            # else:
             quiz.questions.add(Question(
                 question_statement=question.question_statement,
                 options={i: option for i, option in enumerate(question.options)},
@@ -83,7 +65,6 @@ class SingleQuizAPI(MethodView):
             ))
 
         print(f"Quiz: {quiz.to_dict()} \n Questions: {[i.to_dict() for i in quiz.questions]}")
-        # return {"msg": "ok it work"}, 200 
         return add_db([quiz], "Sucess", "Failed")
         
     
@@ -120,7 +101,6 @@ def format_sse(data, event=None):
     return msg
 
 # SSE endpoints
-# @jwt_required()
 def timer_stream(quiz_id, user_id):
     """SSE endpoint that streams timer updates"""
     def generate():
@@ -135,7 +115,7 @@ def timer_stream(quiz_id, user_id):
         ).first()
         
         if timer_session:
-            # Send initial timer state
+
             yield format_sse({
                 "timer_session_id": timer_session.id,
                 "time_remaining": timer_session.time_remaining,
@@ -176,7 +156,6 @@ def timer_stream(quiz_id, user_id):
                     }, event="timer_update")
                     break
                 
-                # Sleep for a second before next update
                 sleep(1)
         else:
             # No active timer session
@@ -191,14 +170,13 @@ def timer_stream(quiz_id, user_id):
 def start_timer(quiz_id):
     """Start a new timer for a quiz"""
     data = request.json
-    # quiz_id = data.get('quiz_id')
     user_id = data.get('user_id')
     duration = data.get('duration')  # in seconds
     
     if not all([quiz_id, user_id, duration]):
         return jsonify({"error": "Missing required parameters"}), 400
     
-    # Check if there's an active timer session
+
     existing_session : TimerSession = TimerSession.query.filter_by(
         quiz_id=quiz_id,
         user_id=user_id,
@@ -206,14 +184,13 @@ def start_timer(quiz_id):
     ).first()
     
     if existing_session:
-        # Return the existing session
         return jsonify({
             "timer_session_id": existing_session.id,
             "time_remaining": existing_session.time_remaining,
             "duration": existing_session.duration_seconds
         })
     
-    # Create a new timer session
+
     session_id = str(uuid.uuid4())
     new_session = TimerSession(
         id=session_id,
@@ -281,12 +258,10 @@ def get_timer(timer_session_id):
         cached_timer = redis_client.get(redis_key)
         
         if cached_timer:
-            # Timer exists in Redis, which means it's still active
             timer_data = json.loads(cached_timer)
             start_time = datetime.fromisoformat(timer_data['start_time'])
             duration = timer_data['duration']
             
-            # Calculate remaining time
             now = datetime.now()
             end_time = start_time + timedelta(seconds=duration)
             
@@ -319,7 +294,6 @@ def save_answer(quiz_id):
         user_id = get_jwt_identity()
         data = request.json
         
-        # Check if timer is still active
         timer_session = TimerSession.query.filter_by(
             quiz_id=quiz_id,
             user_id=user_id,
@@ -329,7 +303,6 @@ def save_answer(quiz_id):
         if not timer_session or timer_session.time_remaining <= 0:
             return jsonify({'error': 'Quiz time has expired'}), 400
             
-        # Save the answer (implementation depends on your data model)
         question_id = data.get('question_id')
         selected_option = data.get('selected_option')
         
@@ -353,40 +326,28 @@ def submit_quiz(quiz_id, body: QuizAttempt):
     try:
         
         user_id = get_jwt_identity()
-        # data = request.json
-        
-        # Get the timer session
+
+
         timer_session = TimerSession.query.filter_by(
             quiz_id=quiz_id,
             user_id=user_id,
             is_active=True
         ).first()
         
-        # Even if timer expired, we'll still process the submission
         if timer_session:
             timer_session.is_active = False
             db.session.commit()
             
             # Clear Redis timer
             redis_client.delete(f"quiz:timer:{timer_session.id}")
-        
-        # Process the submitted answers
-        # answers = body.get('answers', [])
-        
-        # # Save answers to database
-        # for answer in answers:
-        #     question_id = answer.get('question_id')
-        #     selected_option = answer.get('selected_option')
+
         quiz: Quiz = Quiz.query.get_or_404(quiz_id)
         quiz.no_student_attempt += 1
         
         score = Score(quiz_id=quiz_id, user_id=user_id, selected_options=body.answers)
-            # Save to your QuizAnswer model (implementation depends on your data model)
-            # ...
+
         current_app.logger.info(add_db([score]))
-        # current_app.logger.info(do_commit())
-            
-        # Clear Redis answers cache
+
         redis_client.delete(f"quiz:answers:{quiz_id}:{user_id}")
         
         return jsonify({'success': True, 'message': 'Quiz submitted successfully'})

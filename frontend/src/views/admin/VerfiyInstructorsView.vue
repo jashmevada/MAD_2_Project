@@ -13,19 +13,9 @@
 
     <BTable v-else hover responsive :items="instructors" :fields="fields" striped show-empty>
 
-      <!-- <template #cell(name)="data">
-        <div class="d-flex align-items-center">
-          <img :src="data.item.profileImage || 'https://via.placeholder.com/40'" class="rounded-circle me-2" width="40"
-            height="40" alt="Profile">
-          <div>
-            <strong>{{ data.item.name }}</strong>
-            <div class="small text-muted">{{ data.item.qualification }}</div>
-          </div>
-        </div>
-      </template> -->
       <template #empty>
-    <h4>No Instructors To Verify</h4>
-  </template>
+        <h4>No Instructors To Verify</h4>
+      </template>
       <!-- Status column with badge -->
       <template #cell(status)="data">
         <BBadge :variant="getStatusVariant(data.value)">
@@ -108,14 +98,11 @@
 import { ref, onMounted } from 'vue'
 import { apiFetch } from '@/apiFetch'
 
-// Table fields definition
 const fields = [
   { key: 'name', label: 'Instructor Name', sortable: true },
   { key: 'email', label: 'Email', sortable: true },
-  { key: 'qualification', label: 'Qualification', sortable: true},
+  { key: 'qualification', label: 'Qualification', sortable: true },
   { key: 'department', label: 'Department', sortable: true },
-  // { key: 'requestDate', label: 'Requested On', sortable: true },
-  // { key: 'approval', label: 'Approval', sortable: true },
   { key: 'actions', label: 'Actions' }
 ]
 
@@ -145,7 +132,7 @@ const fetchInstructors = async () => {
 }
 
 const getStatusVariant = (status) => {
-  switch (status) { 
+  switch (status) {
     case 'Approved': return 'success'
     case 'Rejected': return 'danger'
     case 'Pending': return 'warning'
@@ -164,9 +151,11 @@ const approveInstructor = async (id) => {
   processingId.value = id
 
   try {
-    await apiFetch(`/instructors/${id}/status`, { method: "PATCH", query: { approval: true }, headers: {
-      'Content-Type': 'application/json'
-    } })
+    await apiFetch(`/instructors/${id}/status`, {
+      method: "PATCH", query: { approval: true }, headers: {
+        'Content-Type': 'application/json'
+      }
+    })
 
     // Update local state
     const index = instructors.value.findIndex(i => i.id === id)
@@ -193,9 +182,11 @@ const rejectInstructor = async (id) => {
   processingId.value = id
 
   try {
-    await apiFetch(`/instructors/${id}/status`, { method: "PATCH", query: { approval: false }, headers: {
-      'Content-Type': 'application/json'
-    } })
+    await apiFetch(`/instructors/${id}/status`, {
+      method: "PATCH", query: { approval: false }, headers: {
+        'Content-Type': 'application/json'
+      }
+    })
 
     // Update local state
     const index = instructors.value.findIndex(i => i.id === id)

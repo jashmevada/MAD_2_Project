@@ -1,7 +1,9 @@
 <template>
   <div class="quiz-container">
+    
     <!-- Loading State -->
     <BOverlay :show="loading" rounded="sm" spinner-variant="primary">
+     
       <!-- Quiz Not Started Yet -->
       <div v-if="!quizStarted && !quizCompleted" class="text-center my-5">
         <h2>{{ quiz.title }}</h2>
@@ -87,7 +89,7 @@ import { useRouter } from 'vue-router';
 const route = useRoute()
 const router = useRouter();
 
-// State variables
+
 const quiz = ref({ 
   id: null,
   title: '',
@@ -115,7 +117,7 @@ const eventSource = ref(null);
 let countdownTimer = null;
 let localTimerInterval = null;
 
-// Computed properties
+
 const currentQuestion = computed(() => {
   if (!quiz.value.question || !quiz.value.question.length) return null;
   return quiz.value.question[currentQuestionIndex.value];
@@ -132,13 +134,13 @@ const canStartNow = computed(() => {
   return now >= startDate;
 });
 
-// Methods
+
 const loadQuiz = async () => {
   try {
     loading.value = true;
     quiz.value = await apiFetch(`quizzes/${route.params.id}`);
 
-    // Initialize user answers array
+
     try {
       quiz.value.question = await apiFetch(`quizzes/${route.params.id}/questions` )
       userAnswers.value = new Array(quiz.value.question.length).fill(null);
@@ -146,7 +148,7 @@ const loadQuiz = async () => {
       userAnswers.value = []
     }
     
-    // Check if quiz has started
+
     const now = new Date();
     const startDate = new Date(quiz.value.date_of_quiz);
     console.log(startDate);
@@ -275,12 +277,11 @@ const startQuiz = async () => {
       quiz_id: route.params.id,
       user_id: 1,
       duration: parseFloat(quiz.value.time_duration) * 60 
-    }// Convert minutes to seconds
+    }
     });
     
     timerSessionId.value = data.timer_session_id;
     
-    // Connect to SSE for timer updates
     connectToTimerStream();
 
     quizStarted.value = true;
@@ -429,8 +430,7 @@ watch(() => route.params.id, (newId, oldId) => {
       eventSource.value.close();
       eventSource.value = null;
     }
-    
-    // Reset state
+
     selectedOption.value = null;
     currentQuestionIndex.value = 0;
     quizStarted.value = false;
@@ -438,8 +438,7 @@ watch(() => route.params.id, (newId, oldId) => {
     timerSessionId.value = null;
     timeLeft.value = null;
     localTimeLeft.value = null;
-    
-    // Load new quiz
+
     loadQuiz();
   }
 });

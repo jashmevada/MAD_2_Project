@@ -88,12 +88,6 @@ onMounted(async () => {
     return Array.from(subjects).map(subject => ({ value: subject, text: subject }))
   })
   
-  // const departmentOptions = computed(() => {
-  //   return 
-  //   // const departments = new Set(quizzes.value.map(quiz => quiz.department))
-  //   // return Array.from(departments).map(department => ({ value: department, text: department }))
-  // })
-  
   const filteredQuizzes = computed(() => {
     let result = quizzes.value
   

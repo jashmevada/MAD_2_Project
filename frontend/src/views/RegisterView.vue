@@ -9,7 +9,6 @@
             </BCardHeader>
 
             <BCardBody class="p-4">
-              <!-- Account Information Form (Step 1) -->
               <div v-if="currentStep === 1">
                 <BForm @submit.prevent="nextStep" novalidate>
                   <BFormGroup label="Username" label-for="username" :state="validation.username"
@@ -53,9 +52,7 @@
                 </BForm>
               </div>
 
-              <!-- Additional Information Form (Step 2) -->
               <div v-if="currentStep === 2">
-                <!-- Student Form -->
                 <div v-if="form.role === 'student'">
                   <h5 class="border-bottom pb-2 mb-3">Student Information</h5>
                   <BForm @submit.prevent="submitForm" novalidate>
@@ -94,7 +91,6 @@
                   </BForm>
                 </div>
 
-                <!-- Instructor Form -->
                 <div v-if="form.role === 'instructor'">
                   <h5 class="border-bottom pb-2 mb-3">Instructor Information</h5>
                   <BForm @submit.prevent="submitForm" novalidate>
@@ -152,7 +148,6 @@ import { useRouter } from 'vue-router'
 
 const router = useRouter()
 
-// Form data
 const form = reactive({
   username: '',
   password: '',
@@ -168,13 +163,11 @@ const form = reactive({
   instructorSubject: -1,
 })
 
-// UI state
 const currentStep = ref(1)
 const isSubmitting = ref(false)
 const formSubmitted = ref(false)
 const showPassword = ref(false)
 
-// Form validation errors
 const errors = reactive({
   username: '',
   email: '',
@@ -187,7 +180,6 @@ const errors = reactive({
   instructorSubject: ''
 })
 
-// Role options
 const roleOptions = [
   { value: '', text: 'Select role' },
   { value: 'student', text: 'Student' },

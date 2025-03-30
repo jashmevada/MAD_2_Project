@@ -7,7 +7,7 @@
       </BButton>
     </div>
 
-    <!-- Subjects Table -->
+
     <BCard>
       <BTable hover responsive :items="subjects" :fields="fields" :busy="isLoading" show-empty
         empty-text="No subjects found" @row-clicked="navigateToSubjectDetail">
@@ -19,13 +19,6 @@
           </div>
         </template>
 
-        <!-- Custom field rendering -->
-        <!-- <template #cell(status)="data"> -->
-        <!--   <BBadge :variant="data.value ? 'success' : 'secondary'"> -->
-        <!--     {{ data.value ? 'Active' : 'Inactive' }} -->
-        <!--   </BBadge> -->
-        <!-- </template> -->
-
         <template #cell(actions)="{ item }">
           <div class="d-flex gap-2">
             <BButton size="sm" variant="outline-primary" @click="editSubject(item)">
@@ -33,15 +26,14 @@
               Edit
             </BButton>
             <BButton size="sm" variant="outline-danger" @click="confirmDelete(item)">
-              <!-- <i class="bi bi-trash"></i> -->
-               Delete
+
+              Delete
             </BButton>
           </div>
         </template>
       </BTable>
     </BCard>
 
-    <!-- Add/Edit Subject Modal -->
     <BModal v-model="showModal" :title="isEditing ? 'Edit Subject' : 'Add New Subject'" @hidden="resetForm"
       @ok="handleSubmit" :ok-title="isEditing ? 'Update' : 'Save'">
       <BForm @submit.prevent>
@@ -49,13 +41,9 @@
           <BFormInput id="subject-name" v-model="form.name" placeholder="Enter subject name" required></BFormInput>
         </BFormGroup>
 
-        <BFormGroup label="Code" label-for="subject-code">
-          <BFormInput id="subject-code" v-model="form.code" placeholder="Enter subject code" required></BFormInput>
-        </BFormGroup>
-
         <BFormGroup label="Department" label-for="department">
           <BFormSelect id="department" v-model="form.department" :options="departmentOptions"
-            :state="validation.department" required></BFormSelect>
+            :state="validation.department" required text-field="title" value-field="id"></BFormSelect>
           <BFormInvalidFeedback v-if="!validation.department">
             Please select a department
           </BFormInvalidFeedback>
@@ -66,37 +54,33 @@
           </BFormTextarea>
         </BFormGroup>
 
-        <!-- <BFormGroup> -->
-        <!--   <BFormCheckbox v-model="form.status" switch> -->
-        <!--     {{ form.status ? 'Active' : 'Inactive' }} -->
-        <!--   </BFormCheckbox> -->
-        <!-- </BFormGroup> -->
       </BForm>
     </BModal>
 
-    <!-- Delete Confirmation Modal -->
+
     <BModal v-model="showDeleteModal" title="Confirm Delete" ok-variant="danger" ok-title="Delete" @ok="deleteSubject">
       <p class="my-4">Are you sure you want to delete the subject "{{ selectedSubject?.name }}"?</p>
       <p class="text-danger">This action cannot be undone.</p>
     </BModal>
   </div>
+
+  <BToastOrchestrator />
+
 </template>
 
 <script setup>
 import { ref, reactive, computed, onMounted } from 'vue'
 import { useRouter } from 'vue-router'
 import { apiFetch } from '@/apiFetch'
+import { useToastController } from 'bootstrap-vue-next'
 
 const router = useRouter()
+const toast = useToastController()
 
-// Table fields definition
 const fields = [
   { key: 'name', label: 'Subject Name', sortable: true },
- //  { key: 'code', label: 'Code', sortable: true },
   { key: 'department', label: 'Department', sortable: true },
-  {key:'description' , label:'Description', sortable:true},
-  // { key: 'credits', label: 'Credits', sortable: true },
-  // { key: 'status', label: 'Status', sortable: true },
+  { key: 'description', label: 'Description', sortable: true },
   { key: 'actions', label: 'Actions' }
 ]
 
@@ -107,56 +91,32 @@ const showModal = ref(false)
 const showDeleteModal = ref(false)
 const isEditing = ref(false)
 const selectedSubject = ref(null)
+const departmentOptions = ref([])
 
 // Form data
 const form = reactive({
   id: null,
   name: undefined,
-  code: '',
   department: '',
   description: '',
 })
 
-// Department options
-const departmentOptions = [
-  { value: '', text: 'Select department' },
-  { value: 'computer-science', text: 'Computer Science' },
-  { value: 'mathematics', text: 'Mathematics' },
-  { value: 'physics', text: 'Physics' },
-  { value: 'chemistry', text: 'Chemistry' },
-  { value: 'biology', text: 'Biology' },
-  { value: 'engineering', text: 'Engineering' }
-]
-
-// Form validation
 const validation = computed(() => {
   return {
     name: form.name?.trim() !== '',
-    code: form.code.trim() !== '',
     department: form.department !== ''
   }
 })
 
-// Check if form is valid
 const isFormValid = computed(() => {
   return Object.values(validation.value).every(valid => valid)
 })
 
-// Fetch subjects from API
 const fetchSubjects = async () => {
   isLoading.value = true
   try {
-    // Replace with your actual API call
     subjects.value = await apiFetch('/subjects')
 
-    // Simulated API response
-    // await new Promise(resolve => setTimeout(resolve, 800))
-    // subjects.value = [
-    //   { id: 1, name: 'Introduction to Programming', code: 'CS101', department: 'computer-science', credits: 3, description: 'Basic programming concepts', status: true },
-    //   { id: 2, name: 'Data Structures', code: 'CS201', department: 'computer-science', credits: 4, description: 'Advanced data structures', status: true },
-    //   { id: 3, name: 'Calculus I', code: 'MATH101', department: 'mathematics', credits: 3, description: 'Limits, derivatives, and integrals', status: true },
-    //   { id: 4, name: 'Organic Chemistry', code: 'CHEM301', department: 'chemistry', credits: 4, description: 'Study of carbon compounds', status: false }
-    // ]
   } catch (error) {
     console.error('Error fetching subjects:', error)
   } finally {
@@ -164,19 +124,17 @@ const fetchSubjects = async () => {
   }
 }
 
-// Open add subject modal
 const openAddModal = () => {
   isEditing.value = false
   resetForm()
   showModal.value = true
 }
 
-// Edit subject
+
 const editSubject = (subject) => {
   isEditing.value = true
   selectedSubject.value = subject
 
-  // Populate form with subject data
   Object.keys(form).forEach(key => {
     if (key in subject) {
       form[key] = subject[key]
@@ -186,33 +144,30 @@ const editSubject = (subject) => {
   showModal.value = true
 }
 
-// Confirm delete
 const confirmDelete = (subject) => {
   selectedSubject.value = subject
   showDeleteModal.value = true
 }
 
-// Delete subject
 const deleteSubject = async () => {
   if (!selectedSubject.value) return
 
   try {
-    // Replace with your actual API call
     await apiFetch(`/subjects/${selectedSubject.value.id}`, { method: 'DELETE' })
 
-    // Update local state
     subjects.value = subjects.value.filter(s => s.id !== selectedSubject.value.id)
 
-    // Show success message (you can implement a toast notification here)
     console.log(`Subject "${selectedSubject.value.name}" deleted successfully`)
+    toast.show?.({ props: { title: 'Delete Department', value: true, variant: 'success', body: `Department "${selectedSubject.value.name}" deleted successfully` } })
+
   } catch (error) {
     console.error('Error deleting subject:', error)
+    toast.show?.({ props: { title: 'Delete Department', value: true, variant: 'success', body: `Department "${selectedSubject.value.name}" deleted successfully` } })
+
   }
 }
 
-// Handle form submission
 const handleSubmit = async (event) => {
-  // Prevent modal from closing if form is invalid
   if (!isFormValid.value) {
     event.preventDefault()
     return
@@ -220,8 +175,7 @@ const handleSubmit = async (event) => {
 
   try {
     if (isEditing.value) {
-      // Update existing subject
-      // Replace with your actual API call
+
       await apiFetch(`/subjects/${form.id}`, {
         method: 'PUT',
         headers: { 'Content-Type': 'application/json' },
@@ -236,15 +190,12 @@ const handleSubmit = async (event) => {
 
       console.log(`Subject "${form.name}" updated successfully`)
     } else {
-      // Add new subject
-      // Replace with your actual API call
-
-      const response = await apiFetch('/subjects/', {
+      const response = await apiFetch('/subjects', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify(form)
       })
-      
+
       const newSubject = {
         ...form,
         id: Math.max(0, ...subjects.value.map(s => s.id)) + 1
@@ -252,7 +203,7 @@ const handleSubmit = async (event) => {
 
       subjects.value.push(newSubject)
 
-      // console.log(`Subject "${form.name}" added successfully`)
+      toast.show?.({ props: { title: 'New Subject', value: true, variant: 'success', body: `Subject "${selectedSubject.value.name}" new successfully` } })
     }
   } catch (error) {
     console.error('Error saving subject:', error)
@@ -274,8 +225,9 @@ const resetForm = () => {
 
 // Fetch subjects on component mount
 onMounted(async () => {
-  await fetchSubjects() 
+  await fetchSubjects()
   // subjects.value = await apiFetch("/subjects")
+  departmentOptions.value = await apiFetch("/departments")
 })
 
 const navigateToSubjectDetail = (item) => {

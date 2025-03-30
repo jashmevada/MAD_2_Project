@@ -1,6 +1,5 @@
 from backend.utils.common import add_db
 from ..models.model import  User
-from .db import db
 
 def create_initial_data():
     existing_user = User.query.filter(

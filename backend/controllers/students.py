@@ -1,12 +1,12 @@
 from datetime import timedelta
 from flask import Blueprint, current_app, request
 from flask_jwt_extended import jwt_required
-from flask_pydantic import validate
+
 from flask.views import MethodView
-from celery import Task, shared_task 
+from celery import shared_task 
 
 from backend.utils.db import db 
-from ..utils.mail import mail, EmailMessage
+from ..utils.mail import EmailMessage
 from ..models.model import Question, Quiz, QuizAssignment, Score, Student
 from backend.utils.common import add_db, do_commit, cache
 
@@ -42,9 +42,6 @@ def accept_quiz(id:int):
 
     reminder_time = quiz.date_of_quiz - timedelta(minutes=10)
     
-    # print(quiz.date_of_quiz)
-    
-    # send_quiz_reminder("jashmevada@gmail.com", quiz.to_dict())
     send_quiz_reminder.apply_async(
         args=["jashmevada@gmail.com", quiz.to_dict()],
         eta=reminder_time
@@ -106,7 +103,8 @@ def send_quiz_reminder(student_email, quiz_info):
         msg.body = f"Reminder: Your quiz '{quiz_info['title']}' starts in 30 minutes!"
         # mail.send_mail(msg)
         msg.send(fail_silently=False)
-        # msg = EmailMessage("Quiz Reminder")
+        
+        
 # Routes
 bp.add_url_rule("/students", view_func=StudentsAPI.as_view("students_api"))
 bp.add_url_rule("/students/<int:id>", view_func=SingleStudentAPI.as_view("single_student_api"))
